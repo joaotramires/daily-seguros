@@ -49,6 +49,9 @@ export default function SurveyModal({ productId, activeCount, onClose, onActivat
   }
 
   async function handlePay() {
+    // THIS IS THE FIX: We remind the computer that the product exists before it saves to the database.
+    if (!product) return; 
+    
     setLoading(true)
     setStep('processing')
     // In production: call /api/create-checkout with productId, price, answers
