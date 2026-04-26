@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --sand-base:  #EDE8DF;
+  --sand-card:  #E5DFD5;
+  --sand-modal: #F0EBE1;
+  --dark:       #0D0D0D;
+  --green:      #1D9E75;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: #D6D0C7;
+  font-family: system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Phone frame */
+.phone-frame {
+  width: 100%;
+  max-width: 430px;
+  min-height: 100svh;
+  margin: 0 auto;
+  background: var(--sand-base);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (min-width: 480px) {
+  body { display: flex; justify-content: center; align-items: flex-start; padding: 24px 0 40px; }
+  .phone-frame {
+    min-height: 820px;
+    max-height: 820px;
+    border-radius: 48px;
+    border: 10px solid #222;
+    box-shadow: 0 40px 80px rgba(0,0,0,.35);
+    overflow: hidden;
+  }
+}
+
+/* Scrollable screen area */
+.screen { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+.screen::-webkit-scrollbar { display: none; }
+
+/* Smooth scroll */
+html { scroll-behavior: smooth; }
+
+/* Input resets */
+input, select, textarea {
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
