@@ -77,7 +77,7 @@ export default function SurveyModal({ productId, activeCount, onClose, onActivat
   }
 
   function handleDone() {
-    onActivated(product.id as ProductId, finalPrice)
+    onActivated(product!.id as ProductId, finalPrice)
     onClose()
   }
 

@@ -44,8 +44,8 @@ export async function POST(req: NextRequest) {
       },
       quantity: 1,
     }],
-    success_url: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/app?success=1`,
-    cancel_url:  `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/app`,
+    success_url: `${process.env.NEXT_PUBLIC_URL || (process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : 'http://localhost:3000')}/app?success=1`,
+    cancel_url:  `${process.env.NEXT_PUBLIC_URL || (process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : 'http://localhost:3000')}/app`,
     metadata: { policyId: policy?.id },
   })
 
