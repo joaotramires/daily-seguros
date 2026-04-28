@@ -1,4 +1,5 @@
 'use client'
+import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 
@@ -12,6 +13,12 @@ const NAV = [
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname  = usePathname()
   const router    = useRouter()
+  const [initial, setInitial] = useState('?')
+
+  useEffect(() => {
+    const name = localStorage.getItem('customerName') || ''
+    if (name) setInitial(name[0].toUpperCase())
+  }, [])
 
   return (
     <div className="phone-frame">
@@ -41,7 +48,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           onClick={() => router.push('/app/account')}
           className="w-10 h-10 rounded-full bg-[#0D0D0D] flex items-center justify-center text-[15px] text-white font-bold"
         >
-          J
+          {initial}
         </button>
       </div>
 

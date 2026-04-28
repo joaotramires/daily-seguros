@@ -76,7 +76,7 @@ export default function LandingPage() {
           <motion.div variants={fadeUp}>
             <motion.button
               whileTap={tapScale}
-              onClick={() => router.push('/onboarding')}
+              onClick={() => router.push('/app')}
               className="w-full bg-white text-[#0a1209] font-bold text-[16px] rounded-2xl py-[17px] text-center tracking-tight"
             >
               Empezar ahora →

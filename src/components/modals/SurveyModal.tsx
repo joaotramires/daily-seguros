@@ -49,20 +49,16 @@ export default function SurveyModal({ productId, activeCount, onClose, onActivat
   }
 
   async function handlePay() {
-    // THIS IS THE FIX: We remind the computer that the product exists before it saves to the database.
-    if (!product) return; 
-    
+    if (!product) return
     setLoading(true)
     setStep('processing')
-    // In production: call /api/create-checkout with productId, price, answers
-    // For demo: simulate payment then activate
     await new Promise(r => setTimeout(r, 1500))
     try {
-      const sb = createClient()
-      const { data: { user } } = await sb.auth.getUser()
-      if (user) {
+      const customerId = localStorage.getItem('customerId')
+      if (customerId) {
+        const sb = createClient()
         await sb.from('policies').insert({
-          customer_id: user.id,
+          customer_id: customerId,
           product: product.id,
           status: 'active',
           monthly_premium: finalPrice,

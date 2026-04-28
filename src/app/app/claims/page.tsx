@@ -32,6 +32,8 @@ export default function ClaimsPage() {
   const [newDesc, setNewDesc] = useState('')
   const [activePolicies, setActivePolicies] = useState<any[]>([])
   const [selectedPolicy, setSelectedPolicy] = useState('')
+  const [editId, setEditId] = useState<string | null>(null)
+  const [editDesc, setEditDesc] = useState('')
 
   useEffect(() => {
     async function load() {
@@ -46,6 +48,19 @@ export default function ClaimsPage() {
     }
     load()
   }, [])
+
+  async function saveEdit(claimId: string, isDemo: boolean) {
+    if (!editDesc.trim()) return
+    setClaims(prev => prev.map(c => c.id === claimId ? { ...c, desc: editDesc } : c))
+    if (!isDemo) {
+      const customerId = localStorage.getItem('customerId')
+      if (customerId) {
+        const sb = createClient()
+        await sb.from('claims').update({ description: editDesc }).eq('id', claimId)
+      }
+    }
+    setEditId(null)
+  }
 
   async function submitClaim() {
     if (!newDesc.trim()) return
@@ -87,24 +102,50 @@ export default function ClaimsPage() {
             style={{ background: 'var(--sand-card)', borderColor: claim.isNew ? 'rgba(29,158,117,.4)' : 'rgba(13,13,13,.08)' }}>
 
             {/* Header row */}
-            <div className="flex justify-between items-center p-4 cursor-pointer"
-              onClick={() => setExpandedId(expandedId === claim.id ? null : claim.id)}>
-              <div>
-                <div className="text-[10px] font-bold text-[#0D0D0D]/35 uppercase tracking-[0.5px]">
-                  Siniestro {claim.id}
+            <div className="p-4">
+              {editId === claim.id ? (
+                <div>
+                  <div className="text-[10px] font-bold text-[#0D0D0D]/35 uppercase tracking-[0.5px] mb-2">
+                    Siniestro {claim.id}
+                  </div>
+                  <textarea
+                    value={editDesc}
+                    onChange={e => setEditDesc(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-[11px] text-[13px] text-[#0D0D0D] border border-[#0D0D0D]/12 resize-none mb-2"
+                    style={{ background: 'rgba(13,13,13,.05)', minHeight: 60 }}
+                  />
+                  <div className="flex gap-2">
+                    <button onClick={() => saveEdit(claim.id, claim.isDemo)}
+                      className="flex-1 py-2 rounded-[10px] text-[13px] font-semibold text-white"
+                      style={{ background: '#1D9E75' }}>Guardar</button>
+                    <button onClick={() => setEditId(null)}
+                      className="flex-1 py-2 rounded-[10px] text-[13px] font-semibold text-[#0D0D0D]/50"
+                      style={{ background: 'rgba(13,13,13,.06)' }}>Cancelar</button>
+                  </div>
                 </div>
-                <div className="text-[13px] font-bold text-[#0D0D0D] mt-0.5">{claim.desc}</div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="rounded-[8px] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.5px]"
-                  style={claim.isNew
-                    ? { background: 'rgba(29,100,220,.1)', color: '#1446A0' }
-                    : { background: 'rgba(161,109,0,.1)', color: '#8B6000' }}>
-                  {claim.isNew ? 'Recibido' : 'En curso'}
-                </span>
-                <motion.span animate={{ rotate: expandedId === claim.id ? 180 : 0 }}
-                  className="text-[14px] text-[#0D0D0D]/25">⌃</motion.span>
-              </div>
+              ) : (
+                <div className="flex justify-between items-center cursor-pointer"
+                  onClick={() => setExpandedId(expandedId === claim.id ? null : claim.id)}>
+                  <div>
+                    <div className="text-[10px] font-bold text-[#0D0D0D]/35 uppercase tracking-[0.5px]">
+                      Siniestro {claim.id}
+                    </div>
+                    <div className="text-[13px] font-bold text-[#0D0D0D] mt-0.5">{claim.desc}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={e => { e.stopPropagation(); setEditId(claim.id); setEditDesc(claim.desc) }}
+                      className="text-[12px] font-semibold text-[#1D9E75]">Editar</button>
+                    <span className="rounded-[8px] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.5px]"
+                      style={claim.isNew
+                        ? { background: 'rgba(29,100,220,.1)', color: '#1446A0' }
+                        : { background: 'rgba(161,109,0,.1)', color: '#8B6000' }}>
+                      {claim.isNew ? 'Recibido' : 'En curso'}
+                    </span>
+                    <motion.span animate={{ rotate: expandedId === claim.id ? 180 : 0 }}
+                      className="text-[14px] text-[#0D0D0D]/25">⌃</motion.span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Expanded detail */}

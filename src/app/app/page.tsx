@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Toggle from '@/components/ui/Toggle'
 import SurveyModal from '@/components/modals/SurveyModal'
+import Sheet from '@/components/ui/Sheet'
 import { PRODUCTS, getBundleDiscount, getLoyaltyDiscount } from '@/lib/products'
 import { createClient } from '@/lib/supabase'
 import { fadeUp, stagger, tapScale } from '@/lib/animations'
@@ -14,6 +15,10 @@ export default function HomePage() {
   const [surveyProduct, setSurveyProduct] = useState<ProductId | null>(null)
   const [bdOpen, setBdOpen] = useState(false)
   const [loyaltyMonths, setLoyaltyMonths] = useState(0)
+  const [showRegister, setShowRegister] = useState(false)
+  const [pendingProduct, setPendingProduct] = useState<ProductId | null>(null)
+  const [regForm, setRegForm] = useState({ name: '', email: '', phone: '' })
+  const [regLoading, setRegLoading] = useState(false)
 
   useEffect(() => {
     async function loadPolicies() {
@@ -53,7 +58,36 @@ export default function HomePage() {
         setActive(a => ({ ...a, [id]: false }))
       }
     } else {
-      setSurveyProduct(id)
+      const customerId = localStorage.getItem('customerId')
+      if (!customerId) {
+        setPendingProduct(id)
+        setShowRegister(true)
+      } else {
+        setSurveyProduct(id)
+      }
+    }
+  }
+
+  async function handleRegisterAndBuy() {
+    if (!regForm.name || !regForm.email) return
+    setRegLoading(true)
+    try {
+      const res = await fetch('/api/register-customer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...regForm, city: 'Madrid' }),
+      })
+      const data = await res.json()
+      if (data.customerId) {
+        localStorage.setItem('customerId', data.customerId)
+        localStorage.setItem('customerName', regForm.name)
+      }
+    } catch (e) { console.error(e) }
+    setRegLoading(false)
+    setShowRegister(false)
+    if (pendingProduct) {
+      setSurveyProduct(pendingProduct)
+      setPendingProduct(null)
     }
   }
 
@@ -212,6 +246,40 @@ export default function HomePage() {
         onClose={() => setSurveyProduct(null)}
         onActivated={handleActivated}
       />
+
+      <Sheet open={showRegister} onClose={() => setShowRegister(false)}>
+        <div className="px-5 pt-4 pb-2">
+          <div className="flex justify-between items-center mb-1">
+            <div className="text-[15px] font-bold text-[#0D0D0D]">Antes de continuar</div>
+            <button onClick={() => setShowRegister(false)} className="w-8 h-8 rounded-full flex items-center justify-center text-[14px] text-[#0D0D0D]/40"
+              style={{ background: 'rgba(13,13,13,.07)' }}>✕</button>
+          </div>
+          <p className="text-[13px] text-[#0D0D0D]/45 mb-5">30 segundos. Solo una vez.</p>
+          {[
+            { label: 'Tu nombre', key: 'name', placeholder: 'Ana García', type: 'text' },
+            { label: 'Email', key: 'email', placeholder: 'ana@email.com', type: 'email' },
+            { label: 'Móvil (opcional)', key: 'phone', placeholder: '+34 600 000 000', type: 'tel' },
+          ].map(f => (
+            <div key={f.key} className="mb-3">
+              <label className="block text-[10px] font-bold text-[#0D0D0D]/40 uppercase tracking-[0.8px] mb-1.5">{f.label}</label>
+              <input
+                type={f.type}
+                placeholder={f.placeholder}
+                value={regForm[f.key as keyof typeof regForm]}
+                onChange={e => setRegForm(r => ({ ...r, [f.key]: e.target.value }))}
+                className="w-full px-4 py-3 rounded-[11px] text-[14px] text-[#0D0D0D]"
+                style={{ background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.12)' }}
+              />
+            </div>
+          ))}
+          <motion.button whileTap={tapScale} onClick={handleRegisterAndBuy}
+            disabled={!regForm.name || !regForm.email || regLoading}
+            className="w-full py-4 rounded-[13px] text-[15px] font-semibold text-white mt-2 disabled:opacity-40"
+            style={{ background: '#0D0D0D' }}>
+            {regLoading ? 'Guardando…' : 'Continuar →'}
+          </motion.button>
+        </div>
+      </Sheet>
     </div>
   )
 }
