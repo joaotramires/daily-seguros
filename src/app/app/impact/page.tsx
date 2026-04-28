@@ -1,10 +1,21 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { fadeUp, stagger, tapScale } from '@/lib/animations'
+import { createClient } from '@/lib/supabase'
 
 export default function ImpactPage() {
   const [adopted, setAdopted] = useState<string | null>(null)
+  const [donationAmount, setDonationAmount] = useState(0)
+
+  useEffect(() => {
+    const customerId = localStorage.getItem('customerId')
+    if (!customerId) return
+    const sb = createClient()
+    sb.from('policies').select('monthly_premium').eq('customer_id', customerId).eq('status', 'active').then(({ data }) => {
+      if (data) setDonationAmount(data.reduce((s: number, p: any) => s + Number(p.monthly_premium) * 0.05, 0))
+    })
+  }, [])
 
   return (
     <div className="px-4 py-4 pb-6">
@@ -13,12 +24,12 @@ export default function ImpactPage() {
         {/* Donation hero */}
         <motion.div variants={fadeUp} className="rounded-[18px] p-6 mb-4 text-center"
           style={{ background: '#0D0D0D' }}>
-          <div className="text-[10px] font-medium text-white/40 uppercase tracking-[1px] mb-1">Has donado este año</div>
+          <div className="text-[10px] font-medium text-white/40 uppercase tracking-[1px] mb-1">Has donado este mes</div>
           <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.2, type: 'spring', stiffness: 300 }}
             className="text-[48px] font-bold tracking-[-2px] leading-none mt-1 mb-3"
             style={{ color: '#1D9E75' }}>
-            €4.80
+            €{donationAmount.toFixed(2)}
           </motion.div>
           <p className="text-[13px] text-white/50 leading-relaxed">
             Junto a 247 miembros, hemos llevado<br />

@@ -13,14 +13,14 @@ export default function HomePage() {
   const [prices, setPrices] = useState<Record<string, number>>({})
   const [surveyProduct, setSurveyProduct] = useState<ProductId | null>(null)
   const [bdOpen, setBdOpen] = useState(false)
-  const [loyaltyMonths] = useState(4)
+  const [loyaltyMonths, setLoyaltyMonths] = useState(0)
 
   useEffect(() => {
     async function loadPolicies() {
+      const customerId = localStorage.getItem('customerId')
+      if (!customerId) return
       const sb = createClient()
-      const { data: { user } } = await sb.auth.getUser()
-      if (!user) return
-      const { data } = await sb.from('policies').select('*').eq('customer_id', user.id).eq('status', 'active')
+      const { data } = await sb.from('policies').select('*').eq('customer_id', customerId).eq('status', 'active')
       if (data) {
         const newActive = { ...active }
         const newPrices = { ...prices }
@@ -31,6 +31,8 @@ export default function HomePage() {
         setActive(newActive)
         setPrices(newPrices)
       }
+      const { data: cust } = await sb.from('customers').select('loyalty_months').eq('id', customerId).single()
+      if (cust) setLoyaltyMonths(cust.loyalty_months)
     }
     loadPolicies()
   }, [])

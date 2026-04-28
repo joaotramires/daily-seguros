@@ -12,14 +12,11 @@ const FAQS = [
   { q: '¿Puedo tener varios seguros?', a: 'Sí, y te premiamos. Con 2 seguros tienes un 3% extra, con 3 un 7%, con los 4 un 12%.' },
 ]
 
-const PM_DEFAULT = [
-  { id: 'pm1', type: 'bizum', icon: '💙', label: 'Bizum',       sub: '+34 600 123 456', isDefault: true  },
-  { id: 'pm2', type: 'card',  icon: '💳', label: 'Visa •••• 4242', sub: 'Caduca 12/26',  isDefault: false },
-]
+const PM_ICONS: Record<string, string> = { bizum: '💙', card: '💳', apple: '🍎' }
 
 export default function AccountPage() {
-  const [profile, setProfile] = useState({ name: 'Ana García', email: 'ana@email.com', phone: '+34 600 123 456' })
-  const [pms, setPms] = useState(PM_DEFAULT)
+  const [profile, setProfile] = useState({ name: '', email: '', phone: '' })
+  const [pms, setPms] = useState<{ id: string; type: string; icon: string; label: string; sub: string; isDefault: boolean }[]>([])
   const [editField, setEditField] = useState<{ key: string; label: string } | null>(null)
   const [editVal, setEditVal] = useState('')
   const [openFaq, setOpenFaq] = useState<number | null>(null)
@@ -28,11 +25,13 @@ export default function AccountPage() {
 
   useEffect(() => {
     async function load() {
+      const customerId = localStorage.getItem('customerId')
+      if (!customerId) return
       const sb = createClient()
-      const { data: { user } } = await sb.auth.getUser()
-      if (!user) return
-      const { data } = await sb.from('customers').select('*').eq('id', user.id).single()
-      if (data) setProfile({ name: data.name, email: data.email, phone: data.phone || '' })
+      const { data: cust } = await sb.from('customers').select('*').eq('id', customerId).single()
+      if (cust) setProfile({ name: cust.name, email: cust.email, phone: cust.phone || '' })
+      const { data: pmRows } = await sb.from('payment_methods').select('*').eq('customer_id', customerId).order('created_at')
+      if (pmRows) setPms(pmRows.map((p: any) => ({ id: p.id, type: p.type, icon: PM_ICONS[p.type] || '💳', label: p.label, sub: p.sub || '', isDefault: p.is_default })))
     }
     load()
   }, [])
@@ -45,24 +44,48 @@ export default function AccountPage() {
   async function saveEdit() {
     if (!editField || !editVal.trim()) return
     setProfile(p => ({ ...p, [editField.key]: editVal }))
-    const sb = createClient()
-    const { data: { user } } = await sb.auth.getUser()
-    if (user) await sb.from('customers').update({ [editField.key]: editVal }).eq('id', user.id)
+    const customerId = localStorage.getItem('customerId')
+    if (customerId) {
+      const sb = createClient()
+      await sb.from('customers').update({ [editField.key]: editVal }).eq('id', customerId)
+    }
     setEditField(null)
   }
 
-  function addPaymentMethod() {
-    if (!newPm.value.trim()) return
-    const icons: Record<string, string> = { bizum: '💙', card: '💳', apple: '🍎' }
+  async function addPaymentMethod() {
+    if (newPm.type !== 'apple' && !newPm.value.trim()) return
     const labels: Record<string, string> = { bizum: 'Bizum', card: `Visa •••• ${newPm.value.slice(-4)}`, apple: 'Apple Pay' }
-    setPms(prev => [...prev, {
-      id: 'pm' + Date.now(), type: newPm.type,
-      icon: icons[newPm.type], label: labels[newPm.type],
-      sub: newPm.type === 'bizum' ? newPm.value : newPm.type === 'card' ? 'Caduca MM/AA' : 'iPhone de Ana',
-      isDefault: false,
-    }])
+    const sub = newPm.type === 'bizum' ? newPm.value : newPm.type === 'card' ? 'Caduca MM/AA' : 'iPhone'
+    const isFirst = pms.length === 0
+    const customerId = localStorage.getItem('customerId')
+    if (customerId) {
+      const sb = createClient()
+      const { data: inserted } = await sb.from('payment_methods').insert({
+        customer_id: customerId, type: newPm.type, label: labels[newPm.type], sub, is_default: isFirst,
+      }).select().single()
+      if (inserted) setPms(prev => [...prev, { id: inserted.id, type: inserted.type, icon: PM_ICONS[inserted.type], label: inserted.label, sub: inserted.sub || '', isDefault: inserted.is_default }])
+    }
     setAddPmOpen(false)
     setNewPm({ type: 'bizum', value: '' })
+  }
+
+  async function setDefaultPm(pmId: string) {
+    const customerId = localStorage.getItem('customerId')
+    if (customerId) {
+      const sb = createClient()
+      await sb.from('payment_methods').update({ is_default: false }).eq('customer_id', customerId)
+      await sb.from('payment_methods').update({ is_default: true }).eq('id', pmId)
+    }
+    setPms(prev => prev.map(p => ({ ...p, isDefault: p.id === pmId })))
+  }
+
+  async function deletePm(pmId: string) {
+    const customerId = localStorage.getItem('customerId')
+    if (customerId) {
+      const sb = createClient()
+      await sb.from('payment_methods').delete().eq('id', pmId)
+    }
+    setPms(prev => prev.filter(p => p.id !== pmId))
   }
 
   return (
@@ -103,11 +126,11 @@ export default function AccountPage() {
               <div className="flex items-center gap-2">
                 {pm.isDefault
                   ? <span className="text-[10px] font-bold text-[#1D9E75] px-2 py-0.5 rounded-[7px]" style={{ background: 'rgba(29,158,117,.1)' }}>Principal</span>
-                  : <button onClick={() => setPms(prev => prev.map(p => ({ ...p, isDefault: p.id === pm.id })))}
+                  : <button onClick={() => setDefaultPm(pm.id)}
                       className="text-[12px] font-semibold text-[#1D9E75]">Usar</button>
                 }
                 {pms.length > 1 && !pm.isDefault && (
-                  <button onClick={() => setPms(prev => prev.filter(p => p.id !== pm.id))}
+                  <button onClick={() => deletePm(pm.id)}
                     className="text-[12px] font-semibold text-red-500">✕</button>
                 )}
               </div>

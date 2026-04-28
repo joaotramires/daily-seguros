@@ -35,13 +35,13 @@ export default function ClaimsPage() {
 
   useEffect(() => {
     async function load() {
+      const customerId = localStorage.getItem('customerId')
+      if (!customerId) return
       const sb = createClient()
-      const { data: { user } } = await sb.auth.getUser()
-      if (!user) return
-      const { data: pols } = await sb.from('policies').select('*').eq('customer_id', user.id).eq('status', 'active')
+      const { data: pols } = await sb.from('policies').select('*').eq('customer_id', customerId).eq('status', 'active')
       setActivePolicies(pols || [])
       if (pols?.length) setSelectedPolicy(pols[0].id)
-      const { data: cls } = await sb.from('claims').select('*').eq('customer_id', user.id)
+      const { data: cls } = await sb.from('claims').select('*').eq('customer_id', customerId)
       if (cls?.length) setClaims(prev => [...cls, ...prev.filter(c => c.isDemo)])
     }
     load()
@@ -56,12 +56,12 @@ export default function ClaimsPage() {
     setShowForm(false)
     setNewDesc('')
 
-    const sb = createClient()
-    const { data: { user } } = await sb.auth.getUser()
-    if (user && selectedPolicy) {
+    const customerId = localStorage.getItem('customerId')
+    if (customerId && selectedPolicy) {
+      const sb = createClient()
       const deadline = new Date(); deadline.setDate(deadline.getDate() + 30)
       await sb.from('claims').insert({
-        customer_id: user.id, policy_id: selectedPolicy,
+        customer_id: customerId, policy_id: selectedPolicy,
         description: newDesc, resolution_deadline: deadline.toISOString()
       })
     }
