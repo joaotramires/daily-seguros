@@ -10,7 +10,7 @@ interface SurveyModalProps {
   productId: ProductId | null
   activeCount: number
   onClose: () => void
-  onActivated: (productId: ProductId, price: number) => void
+  onActivated: (productId: ProductId, price: number, policyId?: string) => void
   customerName?: string
 }
 
@@ -21,6 +21,7 @@ export default function SurveyModal({ productId, activeCount, onClose, onActivat
   const [step, setStep] = useState<Step>('q1')
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
+  const [createdPolicyId, setCreatedPolicyId] = useState<string | undefined>()
 
   if (!product) return null
 
@@ -51,15 +52,35 @@ export default function SurveyModal({ productId, activeCount, onClose, onActivat
     if (!product) return
     setLoading(true)
     setStep('processing')
+
+    // When NEXT_PUBLIC_STRIPE_ENABLED=true, redirect to real Stripe checkout
+    if (process.env.NEXT_PUBLIC_STRIPE_ENABLED === 'true') {
+      try {
+        const customerId = localStorage.getItem('customerId')
+        const res = await fetch('/api/create-checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId: product.id, price: finalPrice, answers, customerId }),
+        })
+        const { url } = await res.json()
+        if (url) { window.location.href = url; return }
+      } catch (e) { console.error(e) }
+      setLoading(false)
+      return
+    }
+
+    // Mock flow — active until Stripe is enabled
     await new Promise(r => setTimeout(r, 1500))
     try {
       const customerId = localStorage.getItem('customerId')
       if (customerId) {
-        await fetch('/api/create-policy', {
+        const res = await fetch('/api/create-policy', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ customerId, product: product.id, monthlyPremium: finalPrice, answers }),
         })
+        const data = await res.json()
+        if (data.policyId) setCreatedPolicyId(data.policyId)
       }
     } catch (e) { console.error(e) }
     setStep('success')
@@ -67,7 +88,7 @@ export default function SurveyModal({ productId, activeCount, onClose, onActivat
   }
 
   function handleDone() {
-    onActivated(product!.id as ProductId, finalPrice)
+    onActivated(product!.id as ProductId, finalPrice, createdPolicyId)
     onClose()
   }
 

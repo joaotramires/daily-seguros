@@ -170,7 +170,7 @@ export default function AccountPage() {
               <div className="text-[14px] font-bold text-[#0D0D0D]">María</div>
               <div className="text-[11px] text-[#0D0D0D]/35 mt-0.5">Respuesta media: <strong className="text-[#1D9E75]">4 min</strong></div>
             </div>
-            <a href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '34600000000'}?text=Hola+María`}
+            <a href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER}?text=Hola+María`}
               target="_blank" rel="noopener noreferrer"
               className="bg-[#1D9E75] text-white px-4 py-2 rounded-[10px] text-[13px] font-semibold no-underline">
               WhatsApp
@@ -199,6 +199,17 @@ export default function AccountPage() {
             </div>
           ))}
         </motion.div>
+
+        <motion.button variants={fadeUp} whileTap={tapScale}
+          onClick={() => {
+            localStorage.removeItem('customerId')
+            localStorage.removeItem('customerName')
+            window.location.href = '/'
+          }}
+          className="w-full py-3.5 rounded-[14px] text-[14px] font-semibold mb-3"
+          style={{ background: 'rgba(239,68,68,.07)', color: '#EF4444', border: '1px solid rgba(239,68,68,.18)' }}>
+          Cerrar sesión
+        </motion.button>
 
         <div className="text-center text-[10px] text-[#0D0D0D]/20">Mediador inscrito en DGSFP España</div>
       </motion.div>

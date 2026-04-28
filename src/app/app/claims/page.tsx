@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { PRODUCTS } from '@/lib/products'
 import { fadeUp, stagger, tapScale } from '@/lib/animations'
@@ -33,6 +33,8 @@ export default function ClaimsPage() {
   const [selectedPolicy, setSelectedPolicy] = useState('')
   const [editId, setEditId] = useState<string | null>(null)
   const [editDesc, setEditDesc] = useState('')
+  const [mediaFiles, setMediaFiles] = useState<File[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     async function load() {
@@ -76,14 +78,28 @@ export default function ClaimsPage() {
     setClaims(prev => [newClaim, ...prev])
     setExpandedId(newId)
     setShowForm(false)
+    const descToSend = newDesc
+    const filesToSend = mediaFiles
     setNewDesc('')
+    setMediaFiles([])
 
     const customerId = localStorage.getItem('customerId')
     if (customerId) {
+      let mediaUrls: string[] = []
+      if (filesToSend.length > 0) {
+        try {
+          const fd = new FormData()
+          fd.append('claimId', newId)
+          filesToSend.forEach(f => fd.append('files', f))
+          const res = await fetch('/api/upload-claim-media', { method: 'POST', body: fd })
+          const data = await res.json()
+          mediaUrls = data.urls || []
+        } catch {}
+      }
       await fetch('/api/create-claim', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customerId, policyId: selectedPolicy || null, description: newDesc }),
+        body: JSON.stringify({ customerId, policyId: selectedPolicy || null, description: descToSend, mediaUrls }),
       })
     }
   }
@@ -293,6 +309,45 @@ export default function ClaimsPage() {
                 placeholder="Describe brevemente qué ocurrió, cuándo y dónde…"
                 className="w-full px-3 py-3 rounded-[11px] text-[13px] text-[#0D0D0D] mb-3 border border-[#0D0D0D]/12 resize-none"
                 style={{ background: 'rgba(13,13,13,.05)', minHeight: 80 }} />
+
+              {/* Media picker */}
+              <input ref={fileInputRef} type="file" accept="image/*,video/*" multiple className="hidden"
+                onChange={e => setMediaFiles(prev => [...prev, ...Array.from(e.target.files || [])])} />
+              {mediaFiles.length === 0 ? (
+                <button type="button" onClick={() => fileInputRef.current?.click()}
+                  className="w-full py-3 rounded-[11px] text-[13px] font-medium mb-3 border border-dashed"
+                  style={{ background: 'rgba(13,13,13,.03)', borderColor: 'rgba(13,13,13,.2)', color: 'rgba(13,13,13,.45)' }}>
+                  📷 Añadir fotos o vídeos
+                </button>
+              ) : (
+                <div className="mb-3">
+                  <div className="flex gap-2 overflow-x-auto pb-1 mb-1.5">
+                    {mediaFiles.map((file, i) => (
+                      <div key={i} className="relative flex-shrink-0 w-[62px] h-[62px] rounded-[10px] overflow-hidden border border-[#0D0D0D]/10"
+                        style={{ background: 'rgba(13,13,13,.07)' }}>
+                        {file.type.startsWith('image/') ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={URL.createObjectURL(file)} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center gap-0.5">
+                            <span className="text-[18px]">🎬</span>
+                            <span className="text-[8px] text-[#0D0D0D]/35 text-center px-1 leading-none">{file.name.split('.').pop()?.toUpperCase()}</span>
+                          </div>
+                        )}
+                        <button type="button"
+                          onClick={() => setMediaFiles(prev => prev.filter((_, j) => j !== i))}
+                          className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[9px] text-white"
+                          style={{ background: 'rgba(0,0,0,.55)' }}>✕</button>
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => fileInputRef.current?.click()}
+                      className="flex-shrink-0 w-[62px] h-[62px] rounded-[10px] border border-dashed flex items-center justify-center text-[22px]"
+                      style={{ borderColor: 'rgba(13,13,13,.2)', color: 'rgba(13,13,13,.3)' }}>+</button>
+                  </div>
+                  <div className="text-[11px] text-[#0D0D0D]/35">{mediaFiles.length} archivo{mediaFiles.length !== 1 ? 's' : ''} seleccionado{mediaFiles.length !== 1 ? 's' : ''}</div>
+                </div>
+              )}
+
               <motion.button whileTap={tapScale} onClick={submitClaim}
                 className="w-full py-3 rounded-[11px] text-[14px] font-semibold text-white"
                 style={{ background: '#1D9E75' }}>
@@ -306,7 +361,7 @@ export default function ClaimsPage() {
         </AnimatePresence>
 
         {/* WhatsApp */}
-        <motion.a variants={fadeUp} href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '34600000000'}?text=Hola+María`}
+        <motion.a variants={fadeUp} href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER}?text=Hola+María`}
           target="_blank" rel="noopener noreferrer" whileTap={tapScale}
           className="flex items-center justify-between rounded-[14px] p-4 no-underline"
           style={{ background: '#0D0D0D' }}>

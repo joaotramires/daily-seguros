@@ -11,6 +11,7 @@ import type { ProductId } from '@/types'
 export default function HomePage() {
   const [active, setActive] = useState<Record<ProductId, boolean>>({ home: false, car: false, pet: false, travel: false })
   const [prices, setPrices] = useState<Record<string, number>>({})
+  const [policyIds, setPolicyIds] = useState<Record<string, string>>({})
   const [surveyProduct, setSurveyProduct] = useState<ProductId | null>(null)
   const [bdOpen, setBdOpen] = useState(false)
   const [loyaltyMonths, setLoyaltyMonths] = useState(0)
@@ -29,12 +30,15 @@ export default function HomePage() {
         if (data.policies?.length) {
           const newActive = { home: false, car: false, pet: false, travel: false }
           const newPrices: Record<string, number> = {}
-          data.policies.forEach((p: { product: ProductId; monthly_premium: number }) => {
+          const newPolicyIds: Record<string, string> = {}
+          data.policies.forEach((p: { id: string; product: ProductId; monthly_premium: number }) => {
             newActive[p.product] = true
             newPrices[p.product] = Number(p.monthly_premium)
+            newPolicyIds[p.product] = p.id
           })
           setActive(newActive)
           setPrices(newPrices)
+          setPolicyIds(newPolicyIds)
         }
         if (data.loyaltyMonths) setLoyaltyMonths(data.loyaltyMonths)
       } catch (e) { console.error(e) }
@@ -52,10 +56,19 @@ export default function HomePage() {
   const nextTier      = [{ months: 4, disc: 5 }, { months: 12, disc: 10 }, { months: 24, disc: 15 }].find(t => t.months > loyaltyMonths)
   const streakPct     = nextTier ? Math.round((loyaltyMonths / nextTier.months) * 100) : 100
 
-  function handleToggle(id: ProductId) {
+  async function handleToggle(id: ProductId) {
     if (active[id]) {
       if (confirm(`¿Cancelar tu seguro de ${PRODUCTS.find(p => p.id === id)?.label}?`)) {
         setActive(a => ({ ...a, [id]: false }))
+        const policyId = policyIds[id]
+        if (policyId) {
+          setPolicyIds(prev => { const n = { ...prev }; delete n[id]; return n })
+          fetch('/api/cancel-policy', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ policyId }),
+          }).catch(console.error)
+        }
       }
     } else {
       const customerId = localStorage.getItem('customerId')
@@ -91,9 +104,10 @@ export default function HomePage() {
     }
   }
 
-  function handleActivated(productId: ProductId, price: number) {
+  function handleActivated(productId: ProductId, price: number, policyId?: string) {
     setActive(a => ({ ...a, [productId]: true }))
     setPrices(p => ({ ...p, [productId]: price }))
+    if (policyId) setPolicyIds(p => ({ ...p, [productId]: policyId }))
   }
 
   return (

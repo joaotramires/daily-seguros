@@ -47,8 +47,15 @@ export function createClient() {
 //   description text,
 //   resolution_deadline timestamptz,
 //   resolved_at timestamptz,
-//   notes text
+//   notes text,
+//   media_urls text[] default '{}'
 // );
+//
+// -- Run this if the table already exists:
+// -- alter table claims add column if not exists media_urls text[] default '{}';
+//
+// -- Storage bucket for claim media (run in Supabase dashboard → Storage):
+// -- create bucket 'claim-media' with public access enabled
 // 
 // create table referrals (
 //   id uuid default gen_random_uuid() primary key,
