@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Sheet from '@/components/ui/Sheet'
-import { createClient } from '@/lib/supabase'
 import { fadeUp, stagger, tapScale } from '@/lib/animations'
 
 const FAQS = [
@@ -27,11 +26,17 @@ export default function AccountPage() {
     async function load() {
       const customerId = localStorage.getItem('customerId')
       if (!customerId) return
-      const sb = createClient()
-      const { data: cust } = await sb.from('customers').select('*').eq('id', customerId).single()
-      if (cust) setProfile({ name: cust.name, email: cust.email, phone: cust.phone || '' })
-      const { data: pmRows } = await sb.from('payment_methods').select('*').eq('customer_id', customerId).order('created_at')
-      if (pmRows) setPms(pmRows.map((p: any) => ({ id: p.id, type: p.type, icon: PM_ICONS[p.type] || '💳', label: p.label, sub: p.sub || '', isDefault: p.is_default })))
+      try {
+        const res = await fetch(`/api/get-customer?id=${customerId}`)
+        const data = await res.json()
+        if (data.profile) setProfile(data.profile)
+        if (data.paymentMethods?.length) {
+          setPms(data.paymentMethods.map((p: any) => ({
+            id: p.id, type: p.type, icon: PM_ICONS[p.type] || '💳',
+            label: p.label, sub: p.sub || '', isDefault: p.is_default,
+          })))
+        }
+      } catch (e) { console.error(e) }
     }
     load()
   }, [])
@@ -46,8 +51,11 @@ export default function AccountPage() {
     setProfile(p => ({ ...p, [editField.key]: editVal }))
     const customerId = localStorage.getItem('customerId')
     if (customerId) {
-      const sb = createClient()
-      await sb.from('customers').update({ [editField.key]: editVal }).eq('id', customerId)
+      await fetch('/api/update-customer', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customerId, field: editField.key, value: editVal }),
+      })
     }
     setEditField(null)
   }
@@ -59,11 +67,16 @@ export default function AccountPage() {
     const isFirst = pms.length === 0
     const customerId = localStorage.getItem('customerId')
     if (customerId) {
-      const sb = createClient()
-      const { data: inserted } = await sb.from('payment_methods').insert({
-        customer_id: customerId, type: newPm.type, label: labels[newPm.type], sub, is_default: isFirst,
-      }).select().single()
-      if (inserted) setPms(prev => [...prev, { id: inserted.id, type: inserted.type, icon: PM_ICONS[inserted.type], label: inserted.label, sub: inserted.sub || '', isDefault: inserted.is_default }])
+      const res = await fetch('/api/payment-method', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customerId, type: newPm.type, label: labels[newPm.type], sub, isDefault: isFirst }),
+      })
+      const data = await res.json()
+      if (data.paymentMethod) {
+        const pm = data.paymentMethod
+        setPms(prev => [...prev, { id: pm.id, type: pm.type, icon: PM_ICONS[pm.type] || '💳', label: pm.label, sub: pm.sub || '', isDefault: pm.is_default }])
+      }
     }
     setAddPmOpen(false)
     setNewPm({ type: 'bizum', value: '' })
@@ -72,19 +85,21 @@ export default function AccountPage() {
   async function setDefaultPm(pmId: string) {
     const customerId = localStorage.getItem('customerId')
     if (customerId) {
-      const sb = createClient()
-      await sb.from('payment_methods').update({ is_default: false }).eq('customer_id', customerId)
-      await sb.from('payment_methods').update({ is_default: true }).eq('id', pmId)
+      await fetch('/api/payment-method', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customerId, pmId }),
+      })
     }
     setPms(prev => prev.map(p => ({ ...p, isDefault: p.id === pmId })))
   }
 
   async function deletePm(pmId: string) {
-    const customerId = localStorage.getItem('customerId')
-    if (customerId) {
-      const sb = createClient()
-      await sb.from('payment_methods').delete().eq('id', pmId)
-    }
+    await fetch('/api/payment-method', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pmId }),
+    })
     setPms(prev => prev.filter(p => p.id !== pmId))
   }
 

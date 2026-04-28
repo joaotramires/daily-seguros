@@ -2,8 +2,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { fadeUp, stagger, tapScale } from '@/lib/animations'
-import { createClient } from '@/lib/supabase'
-
 export default function ImpactPage() {
   const [adopted, setAdopted] = useState<string | null>(null)
   const [donationAmount, setDonationAmount] = useState(0)
@@ -11,10 +9,14 @@ export default function ImpactPage() {
   useEffect(() => {
     const customerId = localStorage.getItem('customerId')
     if (!customerId) return
-    const sb = createClient()
-    sb.from('policies').select('monthly_premium').eq('customer_id', customerId).eq('status', 'active').then(({ data }) => {
-      if (data) setDonationAmount(data.reduce((s: number, p: any) => s + Number(p.monthly_premium) * 0.05, 0))
-    })
+    fetch(`/api/get-customer?id=${customerId}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.policies?.length) {
+          setDonationAmount(data.policies.reduce((s: number, p: { monthly_premium: number }) => s + Number(p.monthly_premium) * 0.05, 0))
+        }
+      })
+      .catch(console.error)
   }, [])
 
   return (

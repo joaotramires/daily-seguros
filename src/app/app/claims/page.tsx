@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { createClient } from '@/lib/supabase'
 import { PRODUCTS } from '@/lib/products'
 import { fadeUp, stagger, tapScale } from '@/lib/animations'
 import type { Claim } from '@/types'
@@ -39,12 +38,20 @@ export default function ClaimsPage() {
     async function load() {
       const customerId = localStorage.getItem('customerId')
       if (!customerId) return
-      const sb = createClient()
-      const { data: pols } = await sb.from('policies').select('*').eq('customer_id', customerId).eq('status', 'active')
-      setActivePolicies(pols || [])
-      if (pols?.length) setSelectedPolicy(pols[0].id)
-      const { data: cls } = await sb.from('claims').select('*').eq('customer_id', customerId)
-      if (cls?.length) setClaims(prev => [...cls, ...prev.filter(c => c.isDemo)])
+      try {
+        const res = await fetch(`/api/get-customer?id=${customerId}`)
+        const data = await res.json()
+        if (data.policies?.length) {
+          setActivePolicies(data.policies)
+          setSelectedPolicy(data.policies[0].id)
+        }
+        if (data.claims?.length) {
+          const mapped = data.claims.map((c: any) => ({
+            id: c.id, desc: c.description, day: 1, isDemo: false,
+          }))
+          setClaims(prev => [...mapped, ...prev.filter(c => c.isDemo)])
+        }
+      } catch (e) { console.error(e) }
     }
     load()
   }, [])
@@ -53,11 +60,11 @@ export default function ClaimsPage() {
     if (!editDesc.trim()) return
     setClaims(prev => prev.map(c => c.id === claimId ? { ...c, desc: editDesc } : c))
     if (!isDemo) {
-      const customerId = localStorage.getItem('customerId')
-      if (customerId) {
-        const sb = createClient()
-        await sb.from('claims').update({ description: editDesc }).eq('id', claimId)
-      }
+      await fetch('/api/update-claim', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ claimId, description: editDesc }),
+      })
     }
     setEditId(null)
   }
@@ -72,12 +79,11 @@ export default function ClaimsPage() {
     setNewDesc('')
 
     const customerId = localStorage.getItem('customerId')
-    if (customerId && selectedPolicy) {
-      const sb = createClient()
-      const deadline = new Date(); deadline.setDate(deadline.getDate() + 30)
-      await sb.from('claims').insert({
-        customer_id: customerId, policy_id: selectedPolicy,
-        description: newDesc, resolution_deadline: deadline.toISOString()
+    if (customerId) {
+      await fetch('/api/create-claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customerId, policyId: selectedPolicy || null, description: newDesc }),
       })
     }
   }

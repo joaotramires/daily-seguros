@@ -3,7 +3,6 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Sheet from '@/components/ui/Sheet'
 import { PRODUCTS, calcPrice, getBundleDiscount } from '@/lib/products'
-import { createClient } from '@/lib/supabase'
 import { fadeUp, stagger, tapScale, scaleIn } from '@/lib/animations'
 import type { ProductId } from '@/types'
 
@@ -56,15 +55,10 @@ export default function SurveyModal({ productId, activeCount, onClose, onActivat
     try {
       const customerId = localStorage.getItem('customerId')
       if (customerId) {
-        const sb = createClient()
-        await sb.from('policies').insert({
-          customer_id: customerId,
-          product: product.id,
-          status: 'active',
-          monthly_premium: finalPrice,
-          annual_premium: finalPrice * 12,
-          answers,
-          starts_at: new Date().toISOString(),
+        await fetch('/api/create-policy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customerId, product: product.id, monthlyPremium: finalPrice, answers }),
         })
       }
     } catch (e) { console.error(e) }
@@ -77,7 +71,6 @@ export default function SurveyModal({ productId, activeCount, onClose, onActivat
     onClose()
   }
 
-  const stepNum = ['q1','q2','q3','price','payment'].indexOf(step) + 1
   const totalSteps = steps.length
 
   return (

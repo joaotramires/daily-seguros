@@ -5,7 +5,6 @@ import Toggle from '@/components/ui/Toggle'
 import SurveyModal from '@/components/modals/SurveyModal'
 import Sheet from '@/components/ui/Sheet'
 import { PRODUCTS, getBundleDiscount, getLoyaltyDiscount } from '@/lib/products'
-import { createClient } from '@/lib/supabase'
 import { fadeUp, stagger, tapScale } from '@/lib/animations'
 import type { ProductId } from '@/types'
 
@@ -24,20 +23,21 @@ export default function HomePage() {
     async function loadPolicies() {
       const customerId = localStorage.getItem('customerId')
       if (!customerId) return
-      const sb = createClient()
-      const { data } = await sb.from('policies').select('*').eq('customer_id', customerId).eq('status', 'active')
-      if (data) {
-        const newActive = { ...active }
-        const newPrices = { ...prices }
-        data.forEach((p: any) => {
-          newActive[p.product as ProductId] = true
-          newPrices[p.product] = Number(p.monthly_premium)
-        })
-        setActive(newActive)
-        setPrices(newPrices)
-      }
-      const { data: cust } = await sb.from('customers').select('loyalty_months').eq('id', customerId).single()
-      if (cust) setLoyaltyMonths(cust.loyalty_months)
+      try {
+        const res = await fetch(`/api/get-customer?id=${customerId}`)
+        const data = await res.json()
+        if (data.policies?.length) {
+          const newActive = { home: false, car: false, pet: false, travel: false }
+          const newPrices: Record<string, number> = {}
+          data.policies.forEach((p: { product: ProductId; monthly_premium: number }) => {
+            newActive[p.product] = true
+            newPrices[p.product] = Number(p.monthly_premium)
+          })
+          setActive(newActive)
+          setPrices(newPrices)
+        }
+        if (data.loyaltyMonths) setLoyaltyMonths(data.loyaltyMonths)
+      } catch (e) { console.error(e) }
     }
     loadPolicies()
   }, [])
