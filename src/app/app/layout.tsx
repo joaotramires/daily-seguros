@@ -1,7 +1,9 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
+import Sheet from '@/components/ui/Sheet'
+import { tapScale } from '@/lib/animations'
 
 const NAV = [
   { path: '/app',          icon: '◉', label: 'Seguros'    },
@@ -13,12 +15,78 @@ const NAV = [
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname  = usePathname()
   const router    = useRouter()
-  const [initial, setInitial] = useState('?')
+  const [initial, setInitial] = useState('')
+  const [showAuth, setShowAuth] = useState(false)
+  const [email, setEmail] = useState('')
+  const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [step, setStep] = useState<'email' | 'register' | 'loading'>('email')
+  const [authLoading, setAuthLoading] = useState(false)
 
   useEffect(() => {
-    const name = localStorage.getItem('customerName') || ''
-    if (name) setInitial(name[0].toUpperCase())
+    const storedName = localStorage.getItem('customerName') || ''
+    if (storedName) setInitial(storedName[0].toUpperCase())
   }, [])
+
+  function handleAvatarClick() {
+    if (initial) {
+      router.push('/app/account')
+    } else {
+      setShowAuth(true)
+    }
+  }
+
+  function closeAuth() {
+    setShowAuth(false)
+    setEmail('')
+    setName('')
+    setPhone('')
+    setStep('email')
+  }
+
+  async function handleEmailSubmit() {
+    if (!email.trim()) return
+    setAuthLoading(true)
+    try {
+      const res = await fetch('/api/login-customer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const data = await res.json()
+      if (data.found) {
+        localStorage.setItem('customerId', data.customerId)
+        localStorage.setItem('customerName', data.name)
+        setInitial(data.name[0].toUpperCase())
+        closeAuth()
+        window.location.reload()
+      } else {
+        setStep('register')
+      }
+    } catch (e) { console.error(e) }
+    setAuthLoading(false)
+  }
+
+  async function handleRegister() {
+    if (!name.trim()) return
+    setAuthLoading(true)
+    try {
+      const res = await fetch('/api/register-customer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, phone, city: 'Madrid' }),
+      })
+      const data = await res.json()
+      if (data.customerId) {
+        localStorage.setItem('customerId', data.customerId)
+        localStorage.setItem('customerName', name)
+        setInitial(name[0].toUpperCase())
+        closeAuth()
+        window.location.reload()
+      }
+    } catch (e) { console.error(e) }
+    setAuthLoading(false)
+  }
 
   return (
     <div className="phone-frame">
@@ -44,12 +112,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <span className="text-[12px] text-[#0D0D0D]/40">247 miembros</span>
           </div>
         </div>
-        <button
-          onClick={() => router.push('/app/account')}
-          className="w-10 h-10 rounded-full bg-[#0D0D0D] flex items-center justify-center text-[15px] text-white font-bold"
-        >
-          {initial}
-        </button>
+        <div className="flex items-center gap-2">
+          {!initial && (
+            <button onClick={() => setShowAuth(true)}
+              className="px-3 py-2 rounded-[10px] text-[12px] font-semibold text-white"
+              style={{ background: '#1D9E75' }}>
+              Entrar
+            </button>
+          )}
+          <button onClick={handleAvatarClick}
+            className="w-10 h-10 rounded-full flex items-center justify-center text-[15px] font-bold transition-colors"
+            style={{ background: initial ? '#0D0D0D' : 'rgba(13,13,13,.1)', color: initial ? 'white' : 'rgba(13,13,13,.3)' }}>
+            {initial || '?'}
+          </button>
+        </div>
       </div>
 
       {/* Screen content */}
@@ -86,6 +162,80 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           )
         })}
       </div>
+
+      {/* Auth sheet */}
+      <Sheet open={showAuth} onClose={closeAuth}>
+        <div className="px-5 pt-4 pb-2">
+          <div className="flex justify-between items-center mb-1">
+            <div className="text-[15px] font-bold text-[#0D0D0D]">
+              {step === 'email' ? 'Entrar en Daily' : 'Crea tu cuenta'}
+            </div>
+            <button onClick={closeAuth}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-[14px] text-[#0D0D0D]/40"
+              style={{ background: 'rgba(13,13,13,.07)' }}>✕</button>
+          </div>
+
+          <AnimatePresence mode="wait">
+            {step === 'email' && (
+              <motion.div key="email" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <p className="text-[13px] text-[#0D0D0D]/45 mb-5 mt-1">
+                  Introduce tu email y continuamos.
+                </p>
+                <label className="block text-[10px] font-bold text-[#0D0D0D]/40 uppercase tracking-[0.8px] mb-1.5">Email</label>
+                <input
+                  type="email"
+                  placeholder="ana@email.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleEmailSubmit()}
+                  className="w-full px-4 py-3 rounded-[11px] text-[14px] text-[#0D0D0D] mb-4"
+                  style={{ background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.12)' }}
+                />
+                <motion.button whileTap={tapScale} onClick={handleEmailSubmit}
+                  disabled={!email.trim() || authLoading}
+                  className="w-full py-4 rounded-[13px] text-[15px] font-semibold text-white disabled:opacity-40"
+                  style={{ background: '#0D0D0D' }}>
+                  {authLoading ? 'Comprobando…' : 'Continuar →'}
+                </motion.button>
+              </motion.div>
+            )}
+
+            {step === 'register' && (
+              <motion.div key="register" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}>
+                <p className="text-[13px] text-[#0D0D0D]/45 mb-5 mt-1">
+                  Es tu primera vez. Solo unos datos.
+                </p>
+                {[
+                  { label: 'Tu nombre', key: 'name', val: name, set: setName, placeholder: 'Ana García', type: 'text' },
+                  { label: 'Móvil (opcional)', key: 'phone', val: phone, set: setPhone, placeholder: '+34 600 000 000', type: 'tel' },
+                ].map(f => (
+                  <div key={f.key} className="mb-3">
+                    <label className="block text-[10px] font-bold text-[#0D0D0D]/40 uppercase tracking-[0.8px] mb-1.5">{f.label}</label>
+                    <input
+                      type={f.type}
+                      placeholder={f.placeholder}
+                      value={f.val}
+                      onChange={e => f.set(e.target.value)}
+                      className="w-full px-4 py-3 rounded-[11px] text-[14px] text-[#0D0D0D]"
+                      style={{ background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.12)' }}
+                    />
+                  </div>
+                ))}
+                <motion.button whileTap={tapScale} onClick={handleRegister}
+                  disabled={!name.trim() || authLoading}
+                  className="w-full py-4 rounded-[13px] text-[15px] font-semibold text-white mt-2 disabled:opacity-40"
+                  style={{ background: '#0D0D0D' }}>
+                  {authLoading ? 'Guardando…' : 'Crear cuenta →'}
+                </motion.button>
+                <button onClick={() => setStep('email')}
+                  className="w-full text-center text-[12px] text-[#0D0D0D]/35 mt-2 py-2">
+                  ← Cambiar email
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </Sheet>
     </div>
   )
 }
