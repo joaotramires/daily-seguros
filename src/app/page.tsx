@@ -41,7 +41,7 @@ export default function LandingPage() {
           </motion.h1>
 
           {/* Sub */}
-          <motion.p variants={fadeUp} className="text-white/40 text-[14px] italic mb-6 leading-relaxed">
+          <motion.p variants={fadeUp} className="text-white/70 text-[14px] italic mb-6 leading-relaxed">
             Daily existe para que eso no vuelva a pasar.
           </motion.p>
 
@@ -54,7 +54,7 @@ export default function LandingPage() {
             ].map((line, i) => (
               <motion.div key={i} variants={fadeUp} className="flex items-start gap-3">
                 <div className="w-[6px] h-[6px] rounded-full bg-[#1D9E75] mt-[7px] flex-shrink-0" />
-                <span className="text-[14px] text-white/75 leading-[1.4]">
+                <span className="text-[14px] text-white/90 leading-[1.4]">
                   <strong className="text-white font-semibold">{line.bold}</strong>{line.rest}
                 </span>
               </motion.div>
@@ -64,12 +64,12 @@ export default function LandingPage() {
           {/* Proof box */}
           <motion.div variants={fadeUp}
             className="rounded-2xl p-4 mb-6"
-            style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.1)' }}
+            style={{ background: 'rgba(255,255,255,.10)', border: '1px solid rgba(255,255,255,.18)' }}
           >
-            <p className="text-white/88 text-[13px] font-semibold leading-[1.4]">
+            <p className="text-white text-[13px] font-semibold leading-[1.4]">
               30 días para resolver tu siniestro —<br />o te devolvemos un mes.
             </p>
-            <p className="text-white/35 text-[11px] mt-1">Garantía Daily · Con cobertura Mapfre</p>
+            <p className="text-white/60 text-[11px] mt-1">Garantía Daily · Con cobertura Mapfre</p>
           </motion.div>
 
           {/* CTA */}
@@ -103,7 +103,7 @@ export default function LandingPage() {
               <div key={i} className="flex items-center gap-1.5">
                 {item.dot && <div className="w-[5px] h-[5px] rounded-full bg-[#1D9E75]" />}
                 {item.star && <span className="text-[#00b67a] text-[11px]">★</span>}
-                <span className="text-[11px] text-white/40 font-medium">{item.label}</span>
+                <span className="text-[11px] text-white/65 font-medium">{item.label}</span>
               </div>
             )
           ))}

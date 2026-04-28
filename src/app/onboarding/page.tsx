@@ -7,8 +7,28 @@ import { fadeUp, stagger, tapScale } from '@/lib/animations'
 export default function OnboardingPage() {
   const router = useRouter()
   const [form, setForm] = useState({ name: '', email: '', phone: '', city: 'Madrid' })
+  const [loading, setLoading] = useState(false)
 
   const set = (k: keyof typeof form, v: string) => setForm(f => ({ ...f, [k]: v }))
+
+  async function handleSubmit() {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/register-customer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      const data = await res.json()
+      if (data.customerId) {
+        localStorage.setItem('customerId', data.customerId)
+        localStorage.setItem('customerName', form.name)
+      }
+    } catch (e) {
+      console.error(e)
+    }
+    router.push('/app')
+  }
 
   return (
     <div className="phone-frame" style={{ background: '#111' }}>
@@ -61,12 +81,12 @@ export default function OnboardingPage() {
                 </motion.div>
               ))}
               <motion.button variants={fadeUp} whileTap={tapScale}
-                onClick={() => router.push('/app')}
-                disabled={!form.name || !form.email}
+                onClick={handleSubmit}
+                disabled={!form.name || !form.email || loading}
                 className="w-full py-4 rounded-[13px] text-[15px] font-semibold text-white mt-2 disabled:opacity-40"
                 style={{ background: '#0D0D0D' }}
               >
-                Entrar →
+                {loading ? 'Guardando…' : 'Entrar →'}
               </motion.button>
             </motion.div>
           </motion.div>
