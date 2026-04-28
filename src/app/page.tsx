@@ -30,7 +30,7 @@ export default function LandingPage() {
 
         <motion.div variants={stagger} initial="hidden" animate="visible">
           {/* Logo */}
-          <motion.div variants={fadeUp} className="text-white/80 text-[20px] font-semibold tracking-tight mb-10">
+          <motion.div variants={fadeUp} className="text-white text-[48px] font-bold tracking-tight mb-8 leading-none">
             daily
           </motion.div>
 
