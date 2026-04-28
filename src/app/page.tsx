@@ -61,6 +61,26 @@ export default function LandingPage() {
             ))}
           </motion.div>
 
+          {/* Testimonials strip */}
+          <motion.div variants={fadeUp} className="mb-6 -mx-1">
+            <div className="flex gap-2.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+              {[
+                { quote: 'Mi reclamación por una gotera resuelta en 14 días.', name: 'Marta', age: 31, city: 'Valencia', product: '🏠 Hogar' },
+                { quote: 'Por fin entiendo qué cubre mi seguro. Nunca antes lo había sabido.', name: 'Diego', age: 33, city: 'Madrid', product: '🚗 Coche' },
+                { quote: 'La operación de Kira costó €900. Daily pagó €820 sin preguntar.', name: 'Sara', age: 29, city: 'Barcelona', product: '🐾 Mascota' },
+              ].map((t, i) => (
+                <div key={i} className="flex-shrink-0 rounded-[14px] p-3.5 flex flex-col justify-between"
+                  style={{ width: '200px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)' }}>
+                  <p className="text-white/85 text-[12px] leading-[1.45] mb-3 italic">"{t.quote}"</p>
+                  <div>
+                    <div className="text-white/50 text-[11px] font-medium">{t.name}, {t.age} · {t.city}</div>
+                    <div className="text-[10px] mt-0.5" style={{ color: '#1D9E75' }}>{t.product}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
           {/* Proof box */}
           <motion.div variants={fadeUp}
             className="rounded-2xl p-4 mb-6"
@@ -73,14 +93,18 @@ export default function LandingPage() {
           </motion.div>
 
           {/* CTA */}
-          <motion.button
-            variants={fadeUp}
-            whileTap={tapScale}
-            onClick={() => router.push('/onboarding')}
-            className="w-full bg-white text-[#0a1209] font-bold text-[16px] rounded-2xl py-[17px] text-center tracking-tight"
-          >
-            Empezar ahora →
-          </motion.button>
+          <motion.div variants={fadeUp}>
+            <motion.button
+              whileTap={tapScale}
+              onClick={() => router.push('/onboarding')}
+              className="w-full bg-white text-[#0a1209] font-bold text-[16px] rounded-2xl py-[17px] text-center tracking-tight"
+            >
+              Empezar ahora →
+            </motion.button>
+            <p className="text-white/60 text-[11px] text-center mt-2">
+              Ya somos 2.400 personas que dejaron su aseguradora de siempre.
+            </p>
+          </motion.div>
         </motion.div>
       </div>
 

@@ -2,7 +2,7 @@ import type { Product } from '@/types'
 
 export const PRODUCTS: Product[] = [
   {
-    id: 'home', label: 'Hogar', desc: 'Tu piso protegido',
+    id: 'home', label: 'Hogar', desc: 'Alquilado o recién comprado',
     basePrice: 14.90, icon: '🏠', color: '#1D9E75',
     questions: [
       { id: 'size', label: 'Tamaño de tu hogar', options: [
@@ -22,7 +22,7 @@ export const PRODUCTS: Product[] = [
     ],
   },
   {
-    id: 'car', label: 'Coche / Moto', desc: 'Circula tranquilo',
+    id: 'car', label: 'Coche / Moto', desc: 'Sin sorpresas cada vez que renuevas',
     basePrice: 28.50, icon: '🚗', color: '#378ADD',
     questions: [
       { id: 'type', label: '¿Qué conduces?', options: [
@@ -42,7 +42,7 @@ export const PRODUCTS: Product[] = [
     ],
   },
   {
-    id: 'pet', label: 'Mascota', desc: 'Tu mejor amigo cubierto',
+    id: 'pet', label: 'Mascota', desc: 'Porque el vet siempre cobra más',
     basePrice: 18.90, icon: '🐾', color: '#D85A30',
     questions: [
       { id: 'type', label: '¿Qué mascota tienes?', options: [
@@ -62,7 +62,7 @@ export const PRODUCTS: Product[] = [
     ],
   },
   {
-    id: 'travel', label: 'Viaje', desc: 'Para tu próxima aventura',
+    id: 'travel', label: 'Viaje', desc: 'Ese viaje que llevas meses planeando',
     basePrice: 12.50, icon: '✈️', color: '#9747FF',
     questions: [
       { id: 'destination', label: '¿A dónde viajas?', options: [
