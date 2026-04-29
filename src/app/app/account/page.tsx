@@ -202,6 +202,21 @@ export default function AccountPage() {
 
         <motion.button variants={fadeUp} whileTap={tapScale}
           onClick={() => {
+            localStorage.removeItem('daily_onboarding_complete')
+            localStorage.removeItem('daily_hogar_price')
+            localStorage.removeItem('daily_mascota_price')
+            localStorage.removeItem('daily_mascota_type')
+            localStorage.removeItem('daily_chip_saved')
+            localStorage.removeItem('daily_cancelling')
+            window.location.href = '/app'
+          }}
+          className="w-full py-3.5 rounded-[14px] text-[14px] font-semibold mb-2"
+          style={{ background: 'rgba(29,158,117,.07)', color: '#1D9E75', border: '1px solid rgba(29,158,117,.2)' }}>
+          Recalcular mi cobertura
+        </motion.button>
+
+        <motion.button variants={fadeUp} whileTap={tapScale}
+          onClick={() => {
             localStorage.removeItem('customerId')
             localStorage.removeItem('customerName')
             window.location.href = '/'

@@ -22,26 +22,6 @@ export const PRODUCTS: Product[] = [
     ],
   },
   {
-    id: 'car', label: 'Coche / Moto', desc: 'Sin sorpresas cada vez que renuevas',
-    basePrice: 28.50, icon: '🚗', color: '#378ADD',
-    questions: [
-      { id: 'type', label: '¿Qué conduces?', options: [
-        { label: 'Coche', multiplier: 1.0 },
-        { label: 'Moto', multiplier: 0.65 },
-      ]},
-      { id: 'year', label: 'Antigüedad del vehículo', options: [
-        { label: 'Antes de 2000', desc: 'Clásico / segunda mano', multiplier: 0.7 },
-        { label: '2000–2015', desc: 'Uso estándar', multiplier: 1.0 },
-        { label: 'Después de 2015', desc: 'Coche moderno', multiplier: 1.3 },
-      ]},
-      { id: 'use', label: '¿Uso principal?', options: [
-        { label: 'Ciudad', desc: 'Menos de 10k km/año', multiplier: 0.85 },
-        { label: 'Mixto', desc: 'Ciudad y carretera', multiplier: 1.0 },
-        { label: 'Carretera', desc: 'Más de 20k km/año', multiplier: 1.25 },
-      ]},
-    ],
-  },
-  {
     id: 'pet', label: 'Mascota', desc: 'Porque el vet siempre cobra más',
     basePrice: 18.90, icon: '🐾', color: '#D85A30',
     questions: [

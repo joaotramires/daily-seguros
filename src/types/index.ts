@@ -1,4 +1,4 @@
-export type ProductId = 'home' | 'car' | 'pet' | 'travel'
+export type ProductId = 'home' | 'pet' | 'travel'
 
 export interface AnswerOption {
   label: string

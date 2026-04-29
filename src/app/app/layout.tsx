@@ -3,56 +3,49 @@ import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import Sheet from '@/components/ui/Sheet'
+import Onboarding from '@/components/Onboarding'
 import { tapScale } from '@/lib/animations'
 
 const NAV = [
-  { path: '/app',          icon: '◉', label: 'Seguros'    },
-  { path: '/app/claims',   icon: '◷', label: 'Siniestros' },
-  { path: '/app/impact',   icon: '♡', label: 'Impacto'    },
-  { path: '/app/account',  icon: '◎', label: 'Cuenta'     },
+  { path: '/app',           icon: '◉', label: 'Seguros'    },
+  { path: '/app/claims',    icon: '◷', label: 'Siniestros' },
+  { path: '/app/ventajas',  icon: '🏆', label: 'Ventajas'  },
+  { path: '/app/account',   icon: '◎', label: 'Ayuda'      },
 ]
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const pathname  = usePathname()
-  const router    = useRouter()
-  const [initial, setInitial] = useState('')
-  const [showAuth, setShowAuth] = useState(false)
-  const [email, setEmail] = useState('')
-  const [name, setName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [step, setStep] = useState<'email' | 'register' | 'loading'>('email')
+  const pathname   = usePathname()
+  const router     = useRouter()
+  const [initial, setInitial]         = useState('')
+  const [showAuth, setShowAuth]       = useState(false)
+  const [email, setEmail]             = useState('')
+  const [name, setName]               = useState('')
+  const [phone, setPhone]             = useState('')
+  const [step, setStep]               = useState<'email' | 'register' | 'loading'>('email')
   const [authLoading, setAuthLoading] = useState(false)
+  const [onboarded, setOnboarded]     = useState<boolean | null>(null)
 
   useEffect(() => {
+    const done = localStorage.getItem('daily_onboarding_complete') === 'true'
+    setOnboarded(done)
     const storedName = localStorage.getItem('customerName') || ''
     if (storedName) setInitial(storedName[0].toUpperCase())
   }, [])
 
   function handleAvatarClick() {
-    if (initial) {
-      router.push('/app/account')
-    } else {
-      setShowAuth(true)
-    }
+    if (initial) router.push('/app/account')
+    else setShowAuth(true)
   }
 
   function closeAuth() {
-    setShowAuth(false)
-    setEmail('')
-    setName('')
-    setPhone('')
-    setStep('email')
+    setShowAuth(false); setEmail(''); setName(''); setPhone(''); setStep('email')
   }
 
   async function handleEmailSubmit() {
     if (!email.trim()) return
     setAuthLoading(true)
     try {
-      const res = await fetch('/api/login-customer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      })
+      const res  = await fetch('/api/login-customer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) })
       const data = await res.json()
       if (data.found) {
         localStorage.setItem('customerId', data.customerId)
@@ -71,11 +64,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     if (!name.trim()) return
     setAuthLoading(true)
     try {
-      const res = await fetch('/api/register-customer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, phone, city: 'Madrid' }),
-      })
+      const res  = await fetch('/api/register-customer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, phone, city: 'Madrid' }) })
       const data = await res.json()
       if (data.customerId) {
         localStorage.setItem('customerId', data.customerId)
@@ -86,6 +75,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       }
     } catch (e) { console.error(e) }
     setAuthLoading(false)
+  }
+
+  if (onboarded === null) return null
+
+  if (!onboarded) {
+    return (
+      <Onboarding onComplete={() => {
+        setOnboarded(true)
+        const n = localStorage.getItem('customerName') || ''
+        if (n) setInitial(n[0].toUpperCase())
+      }} />
+    )
   }
 
   return (
@@ -103,15 +104,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Header */}
       <div className="flex justify-between items-center px-6 py-3 flex-shrink-0 border-b border-[#0D0D0D]/[0.07]"
         style={{ background: 'var(--sand-base)' }}>
-        <div>
-          <div className="text-[26px] font-bold text-[#0D0D0D] tracking-tight leading-none">daily</div>
-          <div className="flex items-center gap-1.5 mt-1">
-            <span className="text-[#00b67a] text-[12px]">★★★★★</span>
-            <span className="text-[12px] font-bold text-[#0D0D0D]">4.8</span>
-            <span className="text-[12px] text-[#0D0D0D]/20">·</span>
-            <span className="text-[12px] text-[#0D0D0D]/40">247 miembros</span>
-          </div>
-        </div>
+        <div className="text-[26px] font-bold text-[#0D0D0D] tracking-tight leading-none">daily</div>
         <div className="flex items-center gap-2">
           {!initial && (
             <button onClick={() => setShowAuth(true)}
@@ -133,25 +126,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {children}
       </div>
 
-      {/* Mapfre bar */}
-      <div className="flex items-center justify-center gap-1.5 py-1.5 flex-shrink-0 border-t border-[#0D0D0D]/[0.06]"
-        style={{ background: 'var(--sand-base)' }}>
-        <span className="text-[10px] text-[#0D0D0D]/35 font-medium tracking-[0.3px]">Powered by</span>
-        <span className="bg-[#E30613] text-white text-[9px] font-bold px-2 py-0.5 rounded-[4px] tracking-[0.5px]">MAPFRE</span>
-      </div>
-
       {/* Bottom nav */}
       <div className="flex justify-around py-2.5 pb-5 flex-shrink-0 border-t border-[#0D0D0D]/[0.07]"
         style={{ background: 'var(--sand-base)' }}>
         {NAV.map(item => {
           const active = pathname === item.path
           return (
-            <motion.button
-              key={item.path}
-              whileTap={{ scale: 0.9 }}
+            <motion.button key={item.path} whileTap={{ scale: 0.9 }}
               onClick={() => router.push(item.path)}
-              className="flex flex-col items-center gap-1 px-3 py-1"
-            >
+              className="flex flex-col items-center gap-1 px-3 py-1">
               <span className={`text-[20px] transition-colors ${active ? 'text-[#0D0D0D]' : 'text-[#0D0D0D]/20'}`}>
                 {item.icon}
               </span>
@@ -170,27 +153,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <div className="text-[15px] font-bold text-[#0D0D0D]">
               {step === 'email' ? 'Entrar en Daily' : 'Crea tu cuenta'}
             </div>
-            <button onClick={closeAuth}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-[14px] text-[#0D0D0D]/40"
+            <button onClick={closeAuth} className="w-8 h-8 rounded-full flex items-center justify-center text-[14px] text-[#0D0D0D]/40"
               style={{ background: 'rgba(13,13,13,.07)' }}>✕</button>
           </div>
-
           <AnimatePresence mode="wait">
             {step === 'email' && (
               <motion.div key="email" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <p className="text-[13px] text-[#0D0D0D]/45 mb-5 mt-1">
-                  Introduce tu email y continuamos.
-                </p>
+                <p className="text-[13px] text-[#0D0D0D]/45 mb-5 mt-1">Introduce tu email y continuamos.</p>
                 <label className="block text-[10px] font-bold text-[#0D0D0D]/40 uppercase tracking-[0.8px] mb-1.5">Email</label>
-                <input
-                  type="email"
-                  placeholder="ana@email.com"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
+                <input type="email" placeholder="ana@email.com" value={email} onChange={e => setEmail(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleEmailSubmit()}
                   className="w-full px-4 py-3 rounded-[11px] text-[14px] text-[#0D0D0D] mb-4"
-                  style={{ background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.12)' }}
-                />
+                  style={{ background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.12)' }} />
                 <motion.button whileTap={tapScale} onClick={handleEmailSubmit}
                   disabled={!email.trim() || authLoading}
                   className="w-full py-4 rounded-[13px] text-[15px] font-semibold text-white disabled:opacity-40"
@@ -199,26 +173,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </motion.button>
               </motion.div>
             )}
-
             {step === 'register' && (
               <motion.div key="register" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}>
-                <p className="text-[13px] text-[#0D0D0D]/45 mb-5 mt-1">
-                  Es tu primera vez. Solo unos datos.
-                </p>
+                <p className="text-[13px] text-[#0D0D0D]/45 mb-5 mt-1">Es tu primera vez. Solo unos datos.</p>
                 {[
                   { label: 'Tu nombre', key: 'name', val: name, set: setName, placeholder: 'Ana García', type: 'text' },
                   { label: 'Móvil (opcional)', key: 'phone', val: phone, set: setPhone, placeholder: '+34 600 000 000', type: 'tel' },
                 ].map(f => (
                   <div key={f.key} className="mb-3">
                     <label className="block text-[10px] font-bold text-[#0D0D0D]/40 uppercase tracking-[0.8px] mb-1.5">{f.label}</label>
-                    <input
-                      type={f.type}
-                      placeholder={f.placeholder}
-                      value={f.val}
-                      onChange={e => f.set(e.target.value)}
+                    <input type={f.type} placeholder={f.placeholder} value={f.val} onChange={e => f.set(e.target.value)}
                       className="w-full px-4 py-3 rounded-[11px] text-[14px] text-[#0D0D0D]"
-                      style={{ background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.12)' }}
-                    />
+                      style={{ background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.12)' }} />
                   </div>
                 ))}
                 <motion.button whileTap={tapScale} onClick={handleRegister}
@@ -227,8 +193,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   style={{ background: '#0D0D0D' }}>
                   {authLoading ? 'Guardando…' : 'Crear cuenta →'}
                 </motion.button>
-                <button onClick={() => setStep('email')}
-                  className="w-full text-center text-[12px] text-[#0D0D0D]/35 mt-2 py-2">
+                <button onClick={() => setStep('email')} className="w-full text-center text-[12px] text-[#0D0D0D]/35 mt-2 py-2">
                   ← Cambiar email
                 </button>
               </motion.div>
