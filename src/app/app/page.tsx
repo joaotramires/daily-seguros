@@ -8,10 +8,46 @@ import { PRODUCTS, getBundleDiscount, getLoyaltyDiscount } from '@/lib/products'
 import { fadeUp, stagger, tapScale } from '@/lib/animations'
 import type { ProductId } from '@/types'
 
+const COVERAGES: Record<string, string[]> = {
+  home: [
+    'Incendio y daños por agua (tuberías, goteras)',
+    'Robo con fractura y robo en el interior',
+    'Daños eléctricos y cortocircuitos',
+    'Responsabilidad civil frente a vecinos',
+    'Asistencia en hogar 24h (cerrajero, fontanero)',
+    'Fenómenos meteorológicos (granizo, viento)',
+  ],
+  car: [
+    'Daños propios por accidente',
+    'Robo total o parcial del vehículo',
+    'Lunas y cristales sin franquicia',
+    'Asistencia en carretera 24h y grúa',
+    'Responsabilidad civil obligatoria y voluntaria',
+    'Defensa jurídica y reclamación de daños',
+  ],
+  pet: [
+    'Consultas veterinarias y urgencias',
+    'Cirugía y hospitalización',
+    'Diagnósticos (radiografías, analíticas, ecografías)',
+    'Vacunas anuales incluidas',
+    'Responsabilidad civil por daños a terceros',
+    'Muerte accidental o por enfermedad',
+  ],
+  travel: [
+    'Gastos médicos y hospitalización en el extranjero',
+    'Cancelación o interrupción del viaje',
+    'Pérdida, robo o daño de equipaje',
+    'Retraso de vuelo (compensación por hora)',
+    'Repatriación sanitaria',
+    'Deportes de aventura (tarifa Aventura)',
+  ],
+}
+
 export default function HomePage() {
   const [active, setActive] = useState<Record<ProductId, boolean>>({ home: false, car: false, pet: false, travel: false })
   const [prices, setPrices] = useState<Record<string, number>>({})
   const [policyIds, setPolicyIds] = useState<Record<string, string>>({})
+  const [openCoverage, setOpenCoverage] = useState<Record<string, boolean>>({})
   const [surveyProduct, setSurveyProduct] = useState<ProductId | null>(null)
   const [bdOpen, setBdOpen] = useState(false)
   const [loyaltyMonths, setLoyaltyMonths] = useState(0)
@@ -179,33 +215,68 @@ export default function HomePage() {
           const isOn   = active[product.id]
           const price  = prices[product.id] || product.basePrice
           const discPrice = isOn && bundleDisc > 0 ? price * (1 - bundleDisc / 100) : price
+          const coverageOpen = !!openCoverage[product.id]
           return (
             <motion.div key={product.id} variants={fadeUp}
-              className="rounded-[14px] p-4 mb-2 flex items-center justify-between border transition-all duration-200"
+              className="rounded-[14px] mb-2 border transition-all duration-200 overflow-hidden"
               style={{
                 background: isOn ? `color-mix(in srgb,${product.color} 6%,var(--sand-card))` : 'var(--sand-card)',
                 borderColor: isOn ? product.color : 'rgba(13,13,13,.08)',
               }}>
-              <div className="flex items-center gap-3.5 flex-1">
-                <div className="w-[42px] h-[42px] rounded-[11px] flex items-center justify-center text-[20px] flex-shrink-0"
-                  style={{ background: isOn ? `color-mix(in srgb,${product.color} 15%,var(--sand-card))` : 'rgba(13,13,13,.06)' }}>
-                  {product.icon}
-                </div>
-                <div>
-                  <div className="text-[14px] font-semibold text-[#0D0D0D]">{product.label}</div>
-                  <div className="text-[12px] text-[#0D0D0D]/40 mt-0.5">
-                    {isOn ? (
-                      bundleDisc > 0 ? (
-                        <span>
-                          <span className="line-through text-[#0D0D0D]/20 mr-1">€{price.toFixed(2)}</span>
-                          <span style={{ color: product.color }}>€{discPrice.toFixed(2)}/mes</span>
-                        </span>
-                      ) : `€${price.toFixed(2)}/mes`
-                    ) : product.desc}
+              {/* Main row */}
+              <div className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3.5 flex-1">
+                  <div className="w-[42px] h-[42px] rounded-[11px] flex items-center justify-center text-[20px] flex-shrink-0"
+                    style={{ background: isOn ? `color-mix(in srgb,${product.color} 15%,var(--sand-card))` : 'rgba(13,13,13,.06)' }}>
+                    {product.icon}
+                  </div>
+                  <div>
+                    <div className="text-[14px] font-semibold text-[#0D0D0D]">{product.label}</div>
+                    <div className="text-[12px] text-[#0D0D0D]/40 mt-0.5">
+                      {isOn ? (
+                        bundleDisc > 0 ? (
+                          <span>
+                            <span className="line-through text-[#0D0D0D]/20 mr-1">€{price.toFixed(2)}</span>
+                            <span style={{ color: product.color }}>€{discPrice.toFixed(2)}/mes</span>
+                          </span>
+                        ) : `€${price.toFixed(2)}/mes`
+                      ) : product.desc}
+                    </div>
                   </div>
                 </div>
+                <Toggle checked={isOn} onChange={() => handleToggle(product.id)} color={product.color} />
               </div>
-              <Toggle checked={isOn} onChange={() => handleToggle(product.id)} color={product.color} />
+
+              {/* Coverage toggle */}
+              <button
+                onClick={() => setOpenCoverage(prev => ({ ...prev, [product.id]: !prev[product.id] }))}
+                className="w-full flex items-center justify-between px-4 py-2 border-t"
+                style={{ borderColor: 'rgba(13,13,13,.06)' }}>
+                <span className="text-[11px] font-semibold text-[#0D0D0D]/35">
+                  {coverageOpen ? 'Ocultar coberturas' : 'Ver coberturas incluidas'}
+                </span>
+                <motion.span animate={{ rotate: coverageOpen ? 180 : 0 }} transition={{ duration: 0.2 }}
+                  className="text-[12px]" style={{ color: 'rgba(13,13,13,.3)', display: 'block' }}>
+                  ⌃
+                </motion.span>
+              </button>
+
+              {/* Coverage list */}
+              <AnimatePresence>
+                {coverageOpen && (
+                  <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
+                    transition={{ duration: 0.22, ease: 'easeInOut' }} className="overflow-hidden">
+                    <div className="px-4 pt-2 pb-3">
+                      {COVERAGES[product.id].map((item, i) => (
+                        <div key={i} className="flex items-start gap-2 py-1.5">
+                          <span className="text-[11px] font-bold flex-shrink-0 mt-[1px]" style={{ color: product.color }}>✓</span>
+                          <span className="text-[12px] text-[#0D0D0D]/55 leading-snug">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           )
         })}
