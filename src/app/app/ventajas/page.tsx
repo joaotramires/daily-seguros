@@ -3,6 +3,29 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { fadeUp, stagger, tapScale } from '@/lib/animations'
 
+const STREAMING_TIERS = [
+  {
+    friends: 3,
+    label: 'Netflix gratis · 1 año',
+    badge: '€156 de valor',
+    icons: [{ emoji: '🍿', color: '#E50914' }],
+    color: '#E50914',
+    bg: 'rgba(229,9,20,.07)',
+  },
+  {
+    friends: 5,
+    label: 'Netflix + HBO + Disney+',
+    badge: 'Mientras seas miembro',
+    icons: [
+      { emoji: '🍿', color: '#E50914' },
+      { emoji: '🎭', color: '#7B2FBE' },
+      { emoji: '🏰', color: '#0063E5' },
+    ],
+    color: '#1D9E75',
+    bg: 'rgba(29,158,117,.07)',
+  },
+]
+
 const BENEFITS = [
   { emoji: '🏥', title: 'Red médica',       desc: 'Especialistas con 30% dto.' },
   { emoji: '🚗', title: 'Grúa 24h',         desc: 'Asistencia en carretera gratis' },
@@ -98,7 +121,7 @@ export default function ClubPage() {
                 <div className="text-[10px] font-bold uppercase tracking-[1px] mb-0.5" style={{ color: '#1D9E75' }}>
                   Invita y gana
                 </div>
-                <div className="text-[16px] font-bold text-[#0D0D0D] tracking-tight">€5/mes por cada amigo</div>
+                <div className="text-[16px] font-bold text-[#0D0D0D] tracking-tight">Invita amigos, gana streaming</div>
               </div>
               <div className="w-10 h-10 rounded-full flex items-center justify-center text-[20px]"
                 style={{ background: 'rgba(29,158,117,.1)' }}>🎁</div>
@@ -118,14 +141,55 @@ export default function ClubPage() {
               </motion.button>
             </div>
           </div>
-          {/* Per-referral value preview */}
-          <div className="grid grid-cols-3 divide-x divide-[#0D0D0D]/[0.06] border-t border-[#0D0D0D]/[0.06]">
-            {[1, 2, 3].map(n => (
-              <div key={n} className="py-3 text-center">
-                <div className="text-[14px] font-bold text-[#0D0D0D]">€{n * 5}/mes</div>
-                <div className="text-[10px] text-[#0D0D0D]/35 mt-0.5">{n} {n === 1 ? 'amigo' : 'amigos'}</div>
-              </div>
-            ))}
+          {/* Streaming tiers */}
+          <div className="border-t border-[#0D0D0D]/[0.06]">
+            {STREAMING_TIERS.map((tier, i) => {
+              const referrals = 0 // mocked
+              const unlocked  = referrals >= tier.friends
+              const pct       = Math.min(100, Math.round((referrals / tier.friends) * 100))
+              return (
+                <div key={tier.label}
+                  className={`flex items-center gap-3 px-4 py-3.5 ${i < STREAMING_TIERS.length - 1 ? 'border-b border-[#0D0D0D]/[0.05]' : ''}`}>
+                  {/* Service icons */}
+                  <div className="flex -space-x-1.5 flex-shrink-0">
+                    {tier.icons.map(ic => (
+                      <div key={ic.emoji}
+                        className="w-8 h-8 rounded-[9px] flex items-center justify-center text-[15px] border-2 border-[var(--sand-card)]"
+                        style={{ background: `${ic.color}18` }}>
+                        {ic.emoji}
+                      </div>
+                    ))}
+                  </div>
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[13px] font-bold text-[#0D0D0D]">{tier.label}</span>
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                        style={{ background: tier.bg, color: tier.color }}>
+                        {tier.badge}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <div className="flex-1 h-[3px] rounded-full overflow-hidden" style={{ background: 'rgba(13,13,13,.08)' }}>
+                        <div className="h-full rounded-full transition-all duration-500"
+                          style={{ width: `${pct}%`, background: tier.color }} />
+                      </div>
+                      <span className="text-[10px] text-[#0D0D0D]/35 flex-shrink-0">
+                        {referrals}/{tier.friends} amigos
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[14px] flex-shrink-0" style={{ opacity: unlocked ? 1 : 0.25 }}>
+                    {unlocked ? '✓' : '🔒'}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+          <div className="px-4 py-2.5 border-t border-[#0D0D0D]/[0.05]">
+            <p className="text-[10px] text-[#0D0D0D]/30 leading-snug">
+              * El amigo debe mantener su póliza activa 3 meses para contar. Tras eso, el premio es tuyo para siempre.
+            </p>
           </div>
         </motion.div>
 

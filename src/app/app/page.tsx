@@ -472,7 +472,7 @@ export default function HomePage() {
               style={{ background: 'rgba(216,90,48,.08)' }}>🐾</div>
             <div className="flex-1">
               <div className="text-[13px] font-semibold text-[#0D0D0D]">Seguro Mascota</div>
-              <div className="text-[11px] text-[#0D0D0D]/40 mt-0.5">¿Tienes perro o gato? Añade cobertura</div>
+              <div className="text-[11px] text-[#0D0D0D]/40 mt-0.5">Desde €26.40/mes · Perro o gato</div>
             </div>
             <motion.button whileTap={tapScale} onClick={() => setPetPickerOpen(true)}
               className="text-[12px] font-bold text-white px-3 py-2 rounded-[9px]"
