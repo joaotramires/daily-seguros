@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import Sheet from '@/components/ui/Sheet'
-import Onboarding from '@/components/Onboarding'
 import { tapScale } from '@/lib/animations'
 
 const NAV = [
@@ -14,8 +13,8 @@ const NAV = [
 ]
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const pathname   = usePathname()
-  const router     = useRouter()
+  const pathname = usePathname()
+  const router   = useRouter()
   const [initial, setInitial]         = useState('')
   const [showAuth, setShowAuth]       = useState(false)
   const [email, setEmail]             = useState('')
@@ -23,11 +22,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [phone, setPhone]             = useState('')
   const [step, setStep]               = useState<'email' | 'register' | 'loading'>('email')
   const [authLoading, setAuthLoading] = useState(false)
-  const [onboarded, setOnboarded]     = useState<boolean | null>(null)
 
   useEffect(() => {
-    const done = localStorage.getItem('daily_onboarding_complete') === 'true'
-    setOnboarded(done)
     const storedName = localStorage.getItem('customerName') || ''
     if (storedName) setInitial(storedName[0].toUpperCase())
   }, [])
@@ -75,18 +71,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       }
     } catch (e) { console.error(e) }
     setAuthLoading(false)
-  }
-
-  if (onboarded === null) return null
-
-  if (!onboarded) {
-    return (
-      <Onboarding onComplete={() => {
-        setOnboarded(true)
-        const n = localStorage.getItem('customerName') || ''
-        if (n) setInitial(n[0].toUpperCase())
-      }} />
-    )
   }
 
   return (

@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { fadeUp, stagger, tapScale } from '@/lib/animations'
 
-// ── Club Mapfre benefits ──────────────────────────────────────────────────────
 const BENEFITS = [
   { emoji: '🏥', title: 'Red médica',       desc: 'Especialistas con 30% dto.' },
   { emoji: '🚗', title: 'Grúa 24h',         desc: 'Asistencia en carretera gratis' },
@@ -13,7 +12,6 @@ const BENEFITS = [
   { emoji: '🎟️', title: 'Ocio',             desc: 'Cine, gimnasio y restaurantes dto.' },
 ]
 
-// ── Impact updates ────────────────────────────────────────────────────────────
 const UPDATES = [
   { icon: '❤️', text: 'Max encontró hogar gracias a la comunidad Daily', when: 'Hace 3 días' },
   { icon: '🥘', text: 'Compramos 50kg de comida con vuestras donaciones', when: 'Hace 1 semana' },
@@ -26,7 +24,7 @@ const CONTRIBUTE = [
   { emoji: '🐾', label: 'Visita el refugio', desc: 'Próxima visita grupal: mayo' },
 ]
 
-type Tab = 'ventajas' | 'impacto' | 'referidos'
+type Tab = 'ventajas' | 'impacto'
 
 export default function ClubPage() {
   const [tab, setTab]             = useState<Tab>('ventajas')
@@ -71,9 +69,8 @@ export default function ClubPage() {
   }
 
   const TABS: { id: Tab; label: string }[] = [
-    { id: 'ventajas',  label: '🏆 Ventajas' },
-    { id: 'impacto',   label: '🐾 Impacto'  },
-    { id: 'referidos', label: '🎁 Referidos' },
+    { id: 'ventajas', label: '🏆 Ventajas' },
+    { id: 'impacto',  label: '🐾 Impacto'  },
   ]
 
   return (
@@ -90,6 +87,46 @@ export default function ClubPage() {
             Todo lo que tienes<br />como miembro
           </div>
           <div className="text-[12px] text-white/35 mt-1.5">Ventajas · Impacto · Referidos</div>
+        </motion.div>
+
+        {/* ── Referral section (always visible) ── */}
+        <motion.div variants={fadeUp} className="rounded-[18px] overflow-hidden mb-4 border"
+          style={{ background: 'var(--sand-card)', borderColor: 'rgba(29,158,117,.2)' }}>
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-[1px] mb-0.5" style={{ color: '#1D9E75' }}>
+                  Invita y gana
+                </div>
+                <div className="text-[16px] font-bold text-[#0D0D0D] tracking-tight">€5/mes por cada amigo</div>
+              </div>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center text-[20px]"
+                style={{ background: 'rgba(29,158,117,.1)' }}>🎁</div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 px-3.5 py-2.5 rounded-[10px] font-bold tracking-[3px] text-[15px] text-[#0D0D0D]"
+                style={{ background: 'rgba(13,13,13,.05)' }}>
+                {referralCode ? referralCode.toUpperCase() : '— — — —'}
+              </div>
+              <motion.button whileTap={tapScale} onClick={copyCode}
+                className="px-4 py-2.5 rounded-[10px] text-[12px] font-bold transition-all"
+                style={{
+                  background: copied ? 'rgba(29,158,117,.12)' : '#0D0D0D',
+                  color: copied ? '#1D9E75' : 'white',
+                }}>
+                {copied ? '✓ Copiado' : 'Copiar'}
+              </motion.button>
+            </div>
+          </div>
+          {/* Per-referral value preview */}
+          <div className="grid grid-cols-3 divide-x divide-[#0D0D0D]/[0.06] border-t border-[#0D0D0D]/[0.06]">
+            {[1, 2, 3].map(n => (
+              <div key={n} className="py-3 text-center">
+                <div className="text-[14px] font-bold text-[#0D0D0D]">€{n * 5}/mes</div>
+                <div className="text-[10px] text-[#0D0D0D]/35 mt-0.5">{n} {n === 1 ? 'amigo' : 'amigos'}</div>
+              </div>
+            ))}
+          </div>
         </motion.div>
 
         {/* Tab switcher */}
@@ -111,40 +148,42 @@ export default function ClubPage() {
           {tab === 'ventajas' && (
             <motion.div key="ventajas" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}>
-              {hasPolicy ? (
-                <>
-                  <div className="text-[10px] font-bold text-[#0D0D0D]/35 uppercase tracking-[0.8px] mb-3">
-                    Club Mapfre · 6 ventajas activas
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                    {BENEFITS.map((b, i) => (
-                      <div key={i} className="rounded-[16px] p-4 flex flex-col"
-                        style={{ background: 'var(--sand-card)', border: '1px solid rgba(13,13,13,.08)', boxShadow: '0 2px 12px rgba(13,13,13,.06)' }}>
-                        <div className="text-[32px] mb-2">{b.emoji}</div>
-                        <div className="text-[13px] font-bold text-[#0D0D0D] leading-tight mb-1">{b.title}</div>
-                        <div className="text-[11px] text-[#0D0D0D]/45 leading-snug flex-1 mb-3">{b.desc}</div>
-                        <motion.button whileTap={tapScale} onClick={handleUsar}
-                          className="w-full py-2 rounded-[9px] text-[11px] font-semibold text-white"
-                          style={{ background: '#1D9E75' }}>
-                          Usar →
-                        </motion.button>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="text-center text-[11px] text-[#0D0D0D]/20 mb-2">
-                    Ventajas incluidas con tu póliza Daily × Mapfre
-                  </div>
-                </>
-              ) : (
-                <div className="rounded-[16px] p-6 text-center border border-[#0D0D0D]/[0.07]"
-                  style={{ background: 'var(--sand-card)' }}>
-                  <div className="text-[32px] mb-3">🔒</div>
-                  <div className="text-[15px] font-bold text-[#0D0D0D] mb-1">Ventajas bloqueadas</div>
-                  <div className="text-[12px] text-[#0D0D0D]/45 leading-relaxed">
-                    Activa tu seguro de Hogar o Mascota para desbloquear las 6 ventajas Club Mapfre.
-                  </div>
+
+              {!hasPolicy && (
+                <div className="rounded-[11px] px-3.5 py-2.5 mb-3 flex items-center gap-2.5 border border-[#F59E0B]/30"
+                  style={{ background: 'rgba(245,158,11,.06)' }}>
+                  <span className="text-[14px]">🔒</span>
+                  <span className="text-[12px] font-medium" style={{ color: '#D97706' }}>
+                    Activa Hogar o Mascota para usar estas ventajas
+                  </span>
                 </div>
               )}
+
+              <div className="text-[10px] font-bold text-[#0D0D0D]/35 uppercase tracking-[0.8px] mb-3">
+                Club Mapfre · 6 ventajas incluidas
+              </div>
+
+              <div className={`grid grid-cols-2 gap-3 mb-4 transition-opacity ${!hasPolicy ? 'opacity-45' : ''}`}>
+                {BENEFITS.map((b, i) => (
+                  <div key={i} className="rounded-[16px] p-4 flex flex-col"
+                    style={{ background: 'var(--sand-card)', border: '1px solid rgba(13,13,13,.08)', boxShadow: '0 2px 12px rgba(13,13,13,.06)' }}>
+                    <div className="text-[32px] mb-2">{b.emoji}</div>
+                    <div className="text-[13px] font-bold text-[#0D0D0D] leading-tight mb-1">{b.title}</div>
+                    <div className="text-[11px] text-[#0D0D0D]/45 leading-snug flex-1 mb-3">{b.desc}</div>
+                    {hasPolicy && (
+                      <motion.button whileTap={tapScale} onClick={handleUsar}
+                        className="w-full py-2 rounded-[9px] text-[11px] font-semibold text-white"
+                        style={{ background: '#1D9E75' }}>
+                        Usar →
+                      </motion.button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="text-center text-[11px] text-[#0D0D0D]/20 mb-2">
+                Ventajas incluidas con tu póliza Daily × Mapfre
+              </div>
             </motion.div>
           )}
 
@@ -153,7 +192,6 @@ export default function ClubPage() {
             <motion.div key="impacto" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}>
 
-              {/* Donation hero */}
               <div className="rounded-[18px] p-5 mb-3 text-center" style={{ background: '#0D0D0D' }}>
                 <div className="text-[10px] font-medium text-white/40 uppercase tracking-[1px] mb-1">Has donado este mes</div>
                 <motion.div initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
@@ -180,7 +218,6 @@ export default function ClubPage() {
                     <div key={i} className="absolute rounded-full"
                       style={{ top: s.top, left: s.left, right: s.right, width: s.size, height: s.size, background: `rgba(93,60,20,${s.opacity})` }} />
                   ))}
-                  {/* CSS dog */}
                   <div className="relative" style={{ width: '80px', height: '78px' }}>
                     <div className="absolute" style={{ width: '24px', height: '12px', background: '#C17F3A', borderRadius: '12px 12px 4px 4px', bottom: '28px', right: '-16px', transform: 'rotate(35deg)', transformOrigin: 'left center' }} />
                     <div className="absolute" style={{ width: '60px', height: '44px', background: '#C17F3A', borderRadius: '24px 24px 16px 16px', bottom: '16px', left: '10px' }} />
@@ -210,7 +247,6 @@ export default function ClubPage() {
                 </div>
               </div>
 
-              {/* How to contribute more */}
               <div className="text-[10px] font-bold text-[#0D0D0D]/35 uppercase tracking-[0.8px] mb-2">Contribuir más</div>
               {CONTRIBUTE.map((c, i) => (
                 <motion.button key={i} whileTap={tapScale}
@@ -225,7 +261,6 @@ export default function ClubPage() {
                 </motion.button>
               ))}
 
-              {/* Updates */}
               <div className="text-[10px] font-bold text-[#0D0D0D]/35 uppercase tracking-[0.8px] mb-2 mt-3">Últimas novedades</div>
               {UPDATES.map((item, i) => (
                 <div key={i} className="flex gap-3 rounded-[12px] p-3.5 mb-2 border border-[#0D0D0D]/[0.07]"
@@ -237,70 +272,6 @@ export default function ClubPage() {
                   </div>
                 </div>
               ))}
-            </motion.div>
-          )}
-
-          {/* ── TAB: REFERIDOS ── */}
-          {tab === 'referidos' && (
-            <motion.div key="referidos" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}>
-
-              {/* How it works */}
-              <div className="rounded-[16px] p-4 mb-3 border border-[#0D0D0D]/[0.07]" style={{ background: 'var(--sand-card)' }}>
-                <div className="text-[13px] font-bold text-[#0D0D0D] mb-3">¿Cómo funciona?</div>
-                {[
-                  { n: '1', text: 'Comparte tu código con amigos y familia' },
-                  { n: '2', text: 'Cuando activan una póliza, ambos ganáis un 5% de descuento extra' },
-                  { n: '3', text: 'Sin límite — cuantos más referidos, más descuento acumulado' },
-                ].map(s => (
-                  <div key={s.n} className="flex items-start gap-3 mb-2.5">
-                    <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0 mt-0.5"
-                      style={{ background: '#1D9E75' }}>{s.n}</div>
-                    <div className="text-[12px] text-[#0D0D0D]/60 leading-snug">{s.text}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Referral code */}
-              <div className="text-[10px] font-bold text-[#0D0D0D]/35 uppercase tracking-[0.8px] mb-2">Tu código único</div>
-              <div className="rounded-[16px] p-4 mb-3 border" style={{ background: 'var(--sand-card)', borderColor: 'rgba(29,158,117,.2)' }}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-[24px] font-bold tracking-[3px] text-[#0D0D0D]">
-                      {referralCode ? referralCode.toUpperCase() : '— — — —'}
-                    </div>
-                    <div className="text-[11px] text-[#0D0D0D]/35 mt-1">Compártelo o copia el enlace</div>
-                  </div>
-                  <motion.button whileTap={tapScale} onClick={copyCode}
-                    className="px-4 py-2.5 rounded-[11px] text-[12px] font-bold transition-all"
-                    style={{
-                      background: copied ? 'rgba(29,158,117,.12)' : '#0D0D0D',
-                      color: copied ? '#1D9E75' : 'white',
-                    }}>
-                    {copied ? '✓ Copiado' : 'Copiar'}
-                  </motion.button>
-                </div>
-              </div>
-
-              {/* Stats */}
-              <div className="text-[10px] font-bold text-[#0D0D0D]/35 uppercase tracking-[0.8px] mb-2">Tu impacto</div>
-              <div className="grid grid-cols-2 gap-2 mb-4">
-                {[
-                  { label: 'Referidos activos', value: '0', sub: 'amigos con póliza' },
-                  { label: 'Descuento extra', value: '0%', sub: 'generado hasta hoy' },
-                ].map((s, i) => (
-                  <div key={i} className="rounded-[14px] p-4 border border-[#0D0D0D]/[0.07]"
-                    style={{ background: 'var(--sand-card)' }}>
-                    <div className="text-[22px] font-bold text-[#0D0D0D] tracking-tight">{s.value}</div>
-                    <div className="text-[11px] font-semibold text-[#0D0D0D]/50 mt-0.5">{s.label}</div>
-                    <div className="text-[10px] text-[#0D0D0D]/25 mt-0.5">{s.sub}</div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="text-center text-[11px] text-[#0D0D0D]/25">
-                Los descuentos se aplican en tu próxima factura
-              </div>
             </motion.div>
           )}
         </AnimatePresence>

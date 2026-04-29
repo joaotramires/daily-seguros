@@ -4,11 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Toggle from '@/components/ui/Toggle'
 import SurveyModal from '@/components/modals/SurveyModal'
 import Sheet from '@/components/ui/Sheet'
+import Onboarding from '@/components/Onboarding'
 import { getBundleDiscount, getLoyaltyDiscount } from '@/lib/products'
 import { fadeUp, stagger, tapScale } from '@/lib/animations'
 import type { ProductId } from '@/types'
 
-// Price comparison cycling (Point 4)
 const COMPS = [
   { max: 15,       text: 'Un café al día ☕' },
   { max: 25,       text: '2 copas en Malasaña 🍷' },
@@ -18,7 +18,6 @@ const COMPS = [
   { max: Infinity, text: 'Menos que un Glovo al mes 🛵' },
 ]
 
-// Coverage items per product (no car)
 const COVERAGES: Record<string, string[]> = {
   home: [
     'Incendio y daños por agua (tuberías, goteras)',
@@ -38,6 +37,13 @@ const COVERAGES: Record<string, string[]> = {
   ],
 }
 
+const PET_OPTIONS = [
+  { label: 'Perro pequeño', emoji: '🐶', price: 33.6 },
+  { label: 'Perro mediano', emoji: '🐕', price: 40.8 },
+  { label: 'Perro grande',  emoji: '🦮', price: 50.4 },
+  { label: 'Gato',          emoji: '🐱', price: 26.4 },
+]
+
 function endOfMonth() {
   const d = new Date()
   return new Date(d.getFullYear(), d.getMonth() + 1, 0)
@@ -53,40 +59,38 @@ export default function HomePage() {
   const [policyIds, setPolicyIds]     = useState<Record<string, string>>({})
   const [loyaltyMonths, setLoyaltyMonths] = useState(0)
 
-  // 30-day cancellation (Point 2 & 5)
-  const [cancelling, setCancelling]   = useState<Record<string, string>>({}) // productId → ISO endDate
+  const [cancelling, setCancelling]   = useState<Record<string, string>>({})
   const [cancelTarget, setCancelTarget] = useState<'home' | 'pet' | null>(null)
   const [cancelTooltip, setCancelTooltip] = useState<'home' | 'pet' | null>(null)
 
-  // Mascota chip (Point 3)
   const [chipInput, setChipInput]     = useState('')
   const [chipSaved, setChipSaved]     = useState(false)
   const [chipModalOpen, setChipModalOpen] = useState(false)
   const [chipBannerVisible, setChipBannerVisible] = useState(false)
 
-  // Price comparison (Point 4)
   const [compIdx, setCompIdx]         = useState(0)
   const [compVisible, setCompVisible] = useState(true)
   const compTimer = useRef<ReturnType<typeof setTimeout>>()
 
-  // Survey (travel add-on only)
   const [surveyProduct, setSurveyProduct] = useState<ProductId | null>(null)
   const [travelActive, setTravelActive]   = useState(false)
 
-  // Breakdown
   const [bdOpen, setBdOpen]           = useState(false)
-
-  // Coverage accordion
   const [openCov, setOpenCov]         = useState<Record<string, boolean>>({})
 
-  // Register gate
   const [showRegister, setShowRegister]   = useState(false)
   const [pendingProduct, setPendingProduct] = useState<'home' | 'pet' | null>(null)
   const [regForm, setRegForm]             = useState({ name: '', email: '', phone: '' })
   const [regLoading, setRegLoading]       = useState(false)
 
-  // Activation loading
   const [activating, setActivating]   = useState<'home' | 'pet' | null>(null)
+
+  // Onboarding overlay (triggered on first activation attempt)
+  const [showOnboarding, setShowOnboarding]     = useState(false)
+  const [pendingActivation, setPendingActivation] = useState<'home' | 'pet' | null>(null)
+
+  // Pet picker (for users who get a pet after onboarding)
+  const [petPickerOpen, setPetPickerOpen] = useState(false)
 
   useEffect(() => {
     const hogarPrice   = parseFloat(localStorage.getItem('daily_hogar_price') || '0')
@@ -95,7 +99,6 @@ export default function HomePage() {
     const chip         = localStorage.getItem('daily_chip_saved') === 'true'
     if (localStorage.getItem('daily_travel_active') === 'true') setTravelActive(true)
     const rawCancelling: Record<string, string> = JSON.parse(localStorage.getItem('daily_cancelling') || '{}')
-    // Clear expired cancellations
     const now = Date.now()
     const validCancelling: Record<string, string> = {}
     for (const [k, v] of Object.entries(rawCancelling)) {
@@ -129,7 +132,6 @@ export default function HomePage() {
       .catch(console.error)
   }, [])
 
-  // Price comparison cycling (Point 4)
   const net = (active.home && !cancelling.home ? prices.home : 0)
             + (active.pet  && !cancelling.pet  ? prices.pet  : 0)
 
@@ -164,14 +166,15 @@ export default function HomePage() {
   const nextTier    = [{ months: 4, disc: 5 }, { months: 12, disc: 10 }, { months: 24, disc: 15 }].find(t => t.months > loyaltyMonths)
   const streakPct   = nextTier ? Math.round((loyaltyMonths / nextTier.months) * 100) : 100
 
-  async function activateDirect(id: 'home' | 'pet') {
+  async function activateDirect(id: 'home' | 'pet', priceOverride?: number) {
     const customerId = localStorage.getItem('customerId')
     if (!customerId) { setPendingProduct(id); setShowRegister(true); return }
     setActivating(id)
+    const monthlyPremium = priceOverride ?? prices[id]
     try {
       const res  = await fetch('/api/create-policy', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customerId, product: id, monthlyPremium: prices[id], answers: {} }),
+        body: JSON.stringify({ customerId, product: id, monthlyPremium, answers: {} }),
       })
       const data = await res.json()
       setActive(a => ({ ...a, [id]: true }))
@@ -183,13 +186,15 @@ export default function HomePage() {
 
   function handleToggle(id: 'home' | 'pet') {
     if (cancelling[id]) {
-      // Tapping a card in cancellation state → show tooltip
       setCancelTooltip(id)
       setTimeout(() => setCancelTooltip(null), 2500)
       return
     }
     if (active[id]) {
       setCancelTarget(id)
+    } else if (prices[id] === 0) {
+      setPendingActivation(id)
+      setShowOnboarding(true)
     } else {
       activateDirect(id)
     }
@@ -233,15 +238,32 @@ export default function HomePage() {
     setChipModalOpen(false)
   }
 
+  function handleOnboardingComplete() {
+    const hp = parseFloat(localStorage.getItem('daily_hogar_price') || '0')
+    const mp = parseFloat(localStorage.getItem('daily_mascota_price') || '0')
+    const mt = localStorage.getItem('daily_mascota_type') || ''
+    setPrices({ home: hp, pet: mp })
+    setMascotaType(mt)
+    setShowOnboarding(false)
+    if (pendingActivation) {
+      const id = pendingActivation
+      const price = id === 'home' ? hp : mp
+      setPendingActivation(null)
+      activateDirect(id, price)
+    }
+  }
+
+  const hasPet = mascotaType && mascotaType !== 'No tengo'
+
   const PRODUCTS_DISPLAY = [
     { id: 'home' as const, label: 'Hogar',   icon: '🏠', color: '#1D9E75', desc: 'Alquilado o recién comprado' },
-    ...(mascotaType && mascotaType !== 'No tengo'
+    ...(hasPet
       ? [{ id: 'pet' as const, label: 'Mascota', icon: '🐾', color: '#D85A30', desc: `${mascotaType}` }]
       : []),
   ]
 
   return (
-    <div className="px-4 py-4 pb-6">
+    <div className="px-4 py-4 pb-6 relative">
       <motion.div variants={stagger} initial="hidden" animate="visible">
 
         {/* Hero card */}
@@ -254,7 +276,6 @@ export default function HomePage() {
           <div className="text-[11px] text-white/30 mt-2 uppercase tracking-[0.8px] font-medium">
             {activeCount === 0 ? 'Activa tu primer seguro ↓' : `al mes · ${activeCount} activo${activeCount !== 1 ? 's' : ''}`}
           </div>
-          {/* Animated comparison (Point 4) */}
           {net > 0 && (
             <motion.div
               key={`${compIdx}-${net}`}
@@ -307,15 +328,15 @@ export default function HomePage() {
           )}
         </motion.div>
 
-        {/* Insurance cards (Points 1, 2, 3, 5) */}
+        {/* Insurance cards */}
         {PRODUCTS_DISPLAY.map(product => {
-          const isOn      = active[product.id]
+          const isOn         = active[product.id]
           const isCancelling = !!cancelling[product.id]
-          const price     = prices[product.id]
-          const discPrice = isOn && bundleDisc > 0 ? price * (1 - bundleDisc / 100) : price
-          const endDate   = isCancelling ? new Date(cancelling[product.id]) : null
-          const covOpen   = !!openCov[product.id]
-          const isLoading = activating === product.id
+          const price        = prices[product.id]
+          const discPrice    = isOn && bundleDisc > 0 ? price * (1 - bundleDisc / 100) : price
+          const endDate      = isCancelling ? new Date(cancelling[product.id]) : null
+          const covOpen      = !!openCov[product.id]
+          const isLoading    = activating === product.id
 
           return (
             <motion.div key={product.id} variants={fadeUp}
@@ -334,7 +355,6 @@ export default function HomePage() {
               }}
               onClick={isCancelling ? () => handleToggle(product.id) : undefined}>
 
-              {/* Main row */}
               <div className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3.5 flex-1">
                   <div className="w-[42px] h-[42px] rounded-[11px] flex items-center justify-center text-[20px] flex-shrink-0 relative"
@@ -362,7 +382,6 @@ export default function HomePage() {
                         ) : `€${price.toFixed(2)}/mes · Inactivo`}
                       </div>
                     )}
-                    {/* Amber badge for cancelling */}
                     {isCancelling && (
                       <div className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold"
                         style={{ background: 'rgba(245,158,11,.12)', color: '#D97706' }}>
@@ -378,7 +397,6 @@ export default function HomePage() {
                 )}
               </div>
 
-              {/* Cancellation tooltip */}
               <AnimatePresence>
                 {cancelTooltip === product.id && (
                   <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
@@ -389,7 +407,6 @@ export default function HomePage() {
                 )}
               </AnimatePresence>
 
-              {/* Coverage toggle */}
               {!isCancelling && COVERAGES[product.id] && (
                 <>
                   <button onClick={() => setOpenCov(prev => ({ ...prev, [product.id]: !prev[product.id] }))}
@@ -422,7 +439,7 @@ export default function HomePage() {
           )
         })}
 
-        {/* Mascota chip banner (Point 3) */}
+        {/* Mascota chip banner */}
         <AnimatePresence>
           {chipBannerVisible && !chipSaved && (
             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
@@ -445,6 +462,25 @@ export default function HomePage() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Add-pet card (shown when user has no pet type set) */}
+        {!hasPet && (
+          <motion.div variants={fadeUp}
+            className="rounded-[14px] p-4 mb-2 flex items-center gap-3 border border-dashed"
+            style={{ borderColor: 'rgba(216,90,48,.3)', background: 'rgba(216,90,48,.03)' }}>
+            <div className="w-[42px] h-[42px] rounded-[11px] flex items-center justify-center text-[20px] flex-shrink-0"
+              style={{ background: 'rgba(216,90,48,.08)' }}>🐾</div>
+            <div className="flex-1">
+              <div className="text-[13px] font-semibold text-[#0D0D0D]">Seguro Mascota</div>
+              <div className="text-[11px] text-[#0D0D0D]/40 mt-0.5">¿Tienes perro o gato? Añade cobertura</div>
+            </div>
+            <motion.button whileTap={tapScale} onClick={() => setPetPickerOpen(true)}
+              className="text-[12px] font-bold text-white px-3 py-2 rounded-[9px]"
+              style={{ background: '#D85A30' }}>
+              Añadir
+            </motion.button>
+          </motion.div>
+        )}
 
         {/* Viaje add-on card */}
         <motion.div variants={fadeUp}
@@ -533,7 +569,7 @@ export default function HomePage() {
         onActivated={(_id, _price) => { setSurveyProduct(null); setTravelActive(true); localStorage.setItem('daily_travel_active', 'true') }}
       />
 
-      {/* 30-day cancellation sheet (Point 2) */}
+      {/* Cancellation sheet */}
       <Sheet open={!!cancelTarget} onClose={() => setCancelTarget(null)}>
         <div className="px-5 pt-4 pb-2">
           <div className="flex justify-between items-center mb-4">
@@ -560,7 +596,7 @@ export default function HomePage() {
         </div>
       </Sheet>
 
-      {/* Chip modal (Point 3) */}
+      {/* Chip modal */}
       <Sheet open={chipModalOpen} onClose={() => setChipModalOpen(false)}>
         <div className="px-5 pt-4 pb-2">
           <div className="flex justify-between items-center mb-4">
@@ -572,11 +608,8 @@ export default function HomePage() {
             Número de chip (15 dígitos)
           </label>
           <input
-            type="number"
-            inputMode="numeric"
-            placeholder="000000000000000"
-            value={chipInput}
-            onChange={e => setChipInput(e.target.value.slice(0, 15))}
+            type="number" inputMode="numeric" placeholder="000000000000000"
+            value={chipInput} onChange={e => setChipInput(e.target.value.slice(0, 15))}
             className="w-full px-4 py-3 rounded-[11px] text-[14px] text-[#0D0D0D] mb-4"
             style={{ background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.12)' }} />
           <motion.button whileTap={tapScale} onClick={saveChip}
@@ -588,6 +621,38 @@ export default function HomePage() {
           <button onClick={() => setChipModalOpen(false)} className="w-full text-center text-[12px] text-[#0D0D0D]/35 py-2">
             Hacerlo más tarde
           </button>
+        </div>
+      </Sheet>
+
+      {/* Pet picker sheet */}
+      <Sheet open={petPickerOpen} onClose={() => setPetPickerOpen(false)}>
+        <div className="px-5 pt-4 pb-2">
+          <div className="flex justify-between items-center mb-4">
+            <div className="text-[15px] font-bold text-[#0D0D0D]">¿Qué mascota tienes?</div>
+            <button onClick={() => setPetPickerOpen(false)} className="w-8 h-8 rounded-full flex items-center justify-center text-[14px] text-[#0D0D0D]/40"
+              style={{ background: 'rgba(13,13,13,.07)' }}>✕</button>
+          </div>
+          <div className="flex flex-col gap-2 pb-2">
+            {PET_OPTIONS.map(o => (
+              <button key={o.label}
+                onClick={() => {
+                  localStorage.setItem('daily_mascota_type', o.label)
+                  localStorage.setItem('daily_mascota_price', String(o.price))
+                  setMascotaType(o.label)
+                  setPrices(p => ({ ...p, pet: o.price }))
+                  setPetPickerOpen(false)
+                }}
+                className="flex items-center gap-3 px-4 py-3.5 rounded-[13px] border text-left transition-all"
+                style={{ background: 'rgba(13,13,13,.04)', borderColor: 'rgba(13,13,13,.1)' }}>
+                <span className="text-[22px]">{o.emoji}</span>
+                <div className="flex-1">
+                  <div className="text-[14px] font-semibold text-[#0D0D0D]">{o.label}</div>
+                  <div className="text-[11px] text-[#0D0D0D]/40">€{o.price.toFixed(2)}/mes</div>
+                </div>
+                <span className="text-[#0D0D0D]/20 text-[16px]">›</span>
+              </button>
+            ))}
+          </div>
         </div>
       </Sheet>
 
@@ -621,6 +686,13 @@ export default function HomePage() {
           </motion.button>
         </div>
       </Sheet>
+
+      {/* Onboarding overlay (shown on first activation attempt) */}
+      {showOnboarding && (
+        <div className="fixed inset-0 z-[100]">
+          <Onboarding inline onComplete={handleOnboardingComplete} />
+        </div>
+      )}
     </div>
   )
 }
