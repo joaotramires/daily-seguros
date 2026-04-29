@@ -9,7 +9,7 @@ import { tapScale } from '@/lib/animations'
 const NAV = [
   { path: '/app',           icon: '◉', label: 'Seguros'    },
   { path: '/app/claims',    icon: '◷', label: 'Siniestros' },
-  { path: '/app/ventajas',  icon: '🏆', label: 'Ventajas'  },
+  { path: '/app/ventajas',  icon: '🏆', label: 'Club'      },
   { path: '/app/account',   icon: '◎', label: 'Ayuda'      },
 ]
 

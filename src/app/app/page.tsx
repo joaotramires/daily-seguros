@@ -38,10 +38,9 @@ const COVERAGES: Record<string, string[]> = {
   ],
 }
 
-function addDays(n: number) {
+function endOfMonth() {
   const d = new Date()
-  d.setDate(d.getDate() + n)
-  return d
+  return new Date(d.getFullYear(), d.getMonth() + 1, 0)
 }
 function fmtDate(d: Date) {
   return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -72,6 +71,7 @@ export default function HomePage() {
 
   // Survey (travel add-on only)
   const [surveyProduct, setSurveyProduct] = useState<ProductId | null>(null)
+  const [travelActive, setTravelActive]   = useState(false)
 
   // Breakdown
   const [bdOpen, setBdOpen]           = useState(false)
@@ -93,6 +93,7 @@ export default function HomePage() {
     const mascotaPrice = parseFloat(localStorage.getItem('daily_mascota_price') || '0')
     const mascType     = localStorage.getItem('daily_mascota_type') || ''
     const chip         = localStorage.getItem('daily_chip_saved') === 'true'
+    if (localStorage.getItem('daily_travel_active') === 'true') setTravelActive(true)
     const rawCancelling: Record<string, string> = JSON.parse(localStorage.getItem('daily_cancelling') || '{}')
     // Clear expired cancellations
     const now = Date.now()
@@ -196,7 +197,7 @@ export default function HomePage() {
 
   function confirmCancel() {
     if (!cancelTarget) return
-    const endDate = addDays(30)
+    const endDate = endOfMonth()
     const newCancelling = { ...cancelling, [cancelTarget]: endDate.toISOString() }
     setCancelling(newCancelling)
     localStorage.setItem('daily_cancelling', JSON.stringify(newCancelling))
@@ -445,21 +446,41 @@ export default function HomePage() {
           )}
         </AnimatePresence>
 
-        {/* Viaje add-on card (Point 1) */}
+        {/* Viaje add-on card */}
         <motion.div variants={fadeUp}
           className="rounded-[14px] p-4 mb-3 flex items-center gap-3 border"
-          style={{ borderStyle: 'dashed', borderColor: 'rgba(151,71,255,.3)', background: 'rgba(151,71,255,.04)' }}>
+          style={{
+            borderStyle: travelActive ? 'solid' : 'dashed',
+            borderColor: travelActive ? '#9747FF' : 'rgba(151,71,255,.3)',
+            background: travelActive ? 'rgba(151,71,255,.07)' : 'rgba(151,71,255,.04)',
+          }}>
           <div className="text-[24px] flex-shrink-0">✈️</div>
           <div className="flex-1">
-            <div className="text-[13px] font-semibold text-[#0D0D0D]">Cobertura de viaje</div>
-            <div className="text-[11px] text-[#0D0D0D]/40 mt-0.5">Solo cuando lo necesitas · Desde €3.90/viaje</div>
+            <div className="flex items-center gap-2">
+              <div className="text-[13px] font-semibold text-[#0D0D0D]">Cobertura de viaje</div>
+              {travelActive && (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white" style={{ background: '#9747FF' }}>Activo</span>
+              )}
+            </div>
+            <div className="text-[11px] text-[#0D0D0D]/40 mt-0.5">
+              {travelActive ? 'Tu viaje está asegurado' : 'Solo cuando lo necesitas · Desde €3.90/viaje'}
+            </div>
           </div>
-          <motion.button whileTap={tapScale}
-            onClick={() => setSurveyProduct('travel')}
-            className="text-[12px] font-bold text-white px-3 py-2 rounded-[9px]"
-            style={{ background: '#9747FF' }}>
-            Añadir
-          </motion.button>
+          {travelActive ? (
+            <motion.button whileTap={tapScale}
+              onClick={() => { setTravelActive(false); localStorage.removeItem('daily_travel_active') }}
+              className="text-[11px] font-bold px-3 py-2 rounded-[9px]"
+              style={{ background: 'rgba(151,71,255,.12)', color: '#9747FF' }}>
+              Gestionar
+            </motion.button>
+          ) : (
+            <motion.button whileTap={tapScale}
+              onClick={() => setSurveyProduct('travel')}
+              className="text-[12px] font-bold text-white px-3 py-2 rounded-[9px]"
+              style={{ background: '#9747FF' }}>
+              Añadir
+            </motion.button>
+          )}
         </motion.div>
 
         {/* Breakdown */}
@@ -509,7 +530,7 @@ export default function HomePage() {
         productId={surveyProduct}
         activeCount={activeCount}
         onClose={() => setSurveyProduct(null)}
-        onActivated={(_id, _price) => { setSurveyProduct(null) }}
+        onActivated={(_id, _price) => { setSurveyProduct(null); setTravelActive(true); localStorage.setItem('daily_travel_active', 'true') }}
       />
 
       {/* 30-day cancellation sheet (Point 2) */}
@@ -523,7 +544,7 @@ export default function HomePage() {
           <div className="rounded-[13px] p-4 mb-5 text-[13px] leading-relaxed text-[#0D0D0D]/70"
             style={{ background: 'rgba(13,13,13,.04)', border: '1px solid rgba(13,13,13,.08)' }}>
             Tu seguro seguirá activo hasta el{' '}
-            <strong className="text-[#0D0D0D]">{fmtDate(addDays(30))}</strong>.{' '}
+            <strong className="text-[#0D0D0D]">{fmtDate(endOfMonth())}</strong>.{' '}
             Nosotros notificamos a Mapfre hoy mismo — sin llamadas, sin papeleo.
           </div>
           <motion.button whileTap={tapScale} onClick={confirmCancel}
