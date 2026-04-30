@@ -300,7 +300,7 @@ export default function HomePage() {
             <div className="flex items-center gap-2">
               <div className="flex-1 px-3.5 py-2.5 rounded-[10px] font-bold tracking-[3px] text-[14px] text-white"
                 style={{ background: 'rgba(255,255,255,.08)' }}>
-                {referralCode ? referralCode.toUpperCase() : '· · · · · ·'}
+                {(referralCode ?? 'DAILY-DEMO').toUpperCase()}
               </div>
               <motion.button whileTap={tapScale} onClick={copyReferral}
                 className="px-4 py-2.5 rounded-[10px] text-[12px] font-bold transition-all"
@@ -395,7 +395,9 @@ export default function HomePage() {
                               <span style={{ color: product.color }}>€{discPrice.toFixed(2)}/mes</span>
                             </span>
                           ) : `€${price.toFixed(2)}/mes`
-                        ) : `€${price.toFixed(2)}/mes · Inactivo`}
+                        ) : price > 0
+                          ? `€${price.toFixed(2)}/mes`
+                          : product.id === 'home' ? 'Desde €10.80/mes' : 'Desde €26.40/mes'}
                       </div>
                     )}
                     {isCancelling && (
@@ -409,7 +411,7 @@ export default function HomePage() {
                 {isLoading ? (
                   <div className="w-6 h-6 border-2 border-[#0D0D0D]/10 border-t-[#1D9E75] rounded-full animate-spin" />
                 ) : (
-                  <Toggle checked={isOn || isCancelling} onChange={() => !isCancelling && handleToggle(product.id)} color={product.color} />
+                  <Toggle checked={isOn && !isCancelling} onChange={() => !isCancelling && handleToggle(product.id)} color={product.color} />
                 )}
               </div>
 

@@ -217,9 +217,14 @@ export default function AccountPage() {
 
         <motion.button variants={fadeUp} whileTap={tapScale}
           onClick={() => {
-            localStorage.removeItem('customerId')
-            localStorage.removeItem('customerName')
-            window.location.href = '/'
+            const keys = [
+              'customerId', 'customerName',
+              'daily_onboarding_complete', 'daily_hogar_price',
+              'daily_mascota_price', 'daily_mascota_type',
+              'daily_chip_saved', 'daily_cancelling', 'daily_travel_active',
+            ]
+            keys.forEach(k => localStorage.removeItem(k))
+            window.location.href = '/app'
           }}
           className="w-full py-3.5 rounded-[14px] text-[14px] font-semibold mb-3"
           style={{ background: 'rgba(239,68,68,.07)', color: '#EF4444', border: '1px solid rgba(239,68,68,.18)' }}>

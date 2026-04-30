@@ -50,8 +50,6 @@ export default function ClubPage() {
   const [toast, setToast]         = useState(false)
   const [adopted, setAdopted]     = useState<string | null>(null)
   const [donationAmount, setDonationAmount] = useState(0)
-  const [referralCode, setReferralCode]     = useState<string | null>(null)
-  const [copied, setCopied]       = useState(false)
   const [hasPolicy, setHasPolicy] = useState(false)
 
   useEffect(() => {
@@ -70,7 +68,6 @@ export default function ClubPage() {
               s + Number(p.monthly_premium) * 0.05, 0)
           )
         }
-        if (data.referralCode) setReferralCode(data.referralCode)
       })
       .catch(console.error)
   }, [])
@@ -80,14 +77,7 @@ export default function ClubPage() {
     setTimeout(() => setToast(false), 2200)
   }
 
-  function copyCode() {
-    if (!referralCode) return
-    navigator.clipboard.writeText(referralCode).catch(() => {})
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  const TABS: { id: Tab; label: string }[] = [
+const TABS: { id: Tab; label: string }[] = [
     { id: 'ventajas', label: '🏆 Ventajas' },
     { id: 'impacto',  label: '🐾 Impacto'  },
   ]
@@ -100,79 +90,6 @@ export default function ClubPage() {
         <motion.div variants={fadeUp} className="mb-4">
           <div className="text-[11px] font-bold tracking-[1.5px] uppercase mb-0.5" style={{ color: '#C9A84C' }}>✦ Daily Club</div>
           <div className="text-[24px] font-bold text-[#0D0D0D] tracking-tight">Tu membresía</div>
-        </motion.div>
-
-        {/* ── Referral section (always visible) ── */}
-        <motion.div variants={fadeUp} className="rounded-[18px] overflow-hidden mb-4 border"
-          style={{ background: 'var(--sand-card)', borderColor: 'rgba(29,158,117,.2)' }}>
-          <div className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <div className="text-[16px] font-bold text-[#0D0D0D] tracking-tight">Invita amigos, gana streaming</div>
-                <div className="text-[12px] text-[#0D0D0D]/40 mt-0.5">Comparte tu código, desbloquea plataformas</div>
-              </div>
-              <div className="w-10 h-10 rounded-full flex items-center justify-center text-[20px]"
-                style={{ background: 'rgba(29,158,117,.1)' }}>🎁</div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 px-3.5 py-2.5 rounded-[10px] font-bold tracking-[3px] text-[15px] text-[#0D0D0D]"
-                style={{ background: 'rgba(13,13,13,.05)' }}>
-                {referralCode ? referralCode.toUpperCase() : '— — — —'}
-              </div>
-              <motion.button whileTap={tapScale} onClick={copyCode}
-                className="px-4 py-2.5 rounded-[10px] text-[12px] font-bold transition-all"
-                style={{
-                  background: copied ? 'rgba(29,158,117,.12)' : '#0D0D0D',
-                  color: copied ? '#1D9E75' : 'white',
-                }}>
-                {copied ? '✓ Copiado' : 'Copiar'}
-              </motion.button>
-            </div>
-          </div>
-          {/* Streaming tiers */}
-          <div className="border-t border-[#0D0D0D]/[0.06]">
-            {STREAMING_TIERS.map((tier, i) => {
-              const referrals = 0
-              const unlocked  = referrals >= tier.friends
-              const pct       = Math.min(100, Math.round((referrals / tier.friends) * 100))
-              return (
-                <div key={tier.headline}
-                  className={`px-4 py-3.5 ${i < STREAMING_TIERS.length - 1 ? 'border-b border-[#0D0D0D]/[0.05]' : ''}`}>
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1">
-                      <div className="flex flex-wrap gap-1.5 mb-1.5">
-                        {tier.platforms.map(p => (
-                          <span key={p.label} className="text-[11px] font-bold px-2 py-0.5 rounded-[6px]"
-                            style={{ background: p.color + '18', color: p.color }}>
-                            {p.label}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="text-[13px] font-bold text-[#0D0D0D]">{tier.headline}</div>
-                      <div className="text-[11px] text-[#0D0D0D]/40 mt-0.5">{tier.sub}</div>
-                    </div>
-                    <span className="text-[14px] flex-shrink-0 mt-0.5" style={{ opacity: unlocked ? 1 : 0.3 }}>
-                      {unlocked ? '✓' : '🔒'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-2">
-                    <div className="flex-1 h-[3px] rounded-full overflow-hidden" style={{ background: 'rgba(13,13,13,.08)' }}>
-                      <div className="h-full rounded-full transition-all duration-500"
-                        style={{ width: `${pct}%`, background: tier.platforms[0].color }} />
-                    </div>
-                    <span className="text-[10px] text-[#0D0D0D]/35 flex-shrink-0">
-                      {referrals}/{tier.friends} amigos
-                    </span>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-          <div className="px-4 py-2.5 border-t border-[#0D0D0D]/[0.05]">
-            <p className="text-[10px] text-[#0D0D0D]/30 leading-snug">
-              * El amigo debe mantener su póliza activa 3 meses para contar. Tras eso, el premio es tuyo para siempre.
-            </p>
-          </div>
         </motion.div>
 
         {/* Tab switcher */}
