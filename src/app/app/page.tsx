@@ -390,7 +390,7 @@ export default function HomePage() {
                               <span style={{ color: product.color }}>€{discPrice.toFixed(2)}/mes</span>
                             </span>
                           ) : `€${price.toFixed(2)}/mes`
-                        ) : <><span>Desde €{product.desde.toFixed(2)}/mes</span><span className="ml-1.5 opacity-50">· {getComp(product.desde)}</span></>}
+                        ) : <><span>Desde €{product.desde.toFixed(2)}/mes</span><span className="ml-1.5">· {getComp(product.desde)}</span></>}
                       </div>
                     )}
                     {isCancelling && (
