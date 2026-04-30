@@ -277,17 +277,6 @@ export default function HomePage() {
           <div className="text-[11px] text-white/30 mt-2 uppercase tracking-[0.8px] font-medium">
             {activeCount === 0 ? 'Activa tu primer seguro ↓' : `al mes · ${activeCount} activo${activeCount !== 1 ? 's' : ''}`}
           </div>
-          {net > 0 ? (
-            <motion.div
-              key={`${compIdx}-${net}`}
-              animate={{ opacity: compVisible ? 1 : 0 }}
-              transition={{ duration: 0.3 }}
-              className="text-[12px] text-white/50 mt-2">
-              {validComps[compIdx % validComps.length]?.text ?? ''}
-            </motion.div>
-          ) : (
-            <div className="text-[12px] text-white/35 mt-2">Desde €10.80/mes · menos que un café al día ☕</div>
-          )}
         </motion.div>
 
         {/* Bundle badge */}
@@ -522,6 +511,21 @@ export default function HomePage() {
           )}
         </motion.div>
 
+        {/* Comparison strip */}
+        {net > 0 && (
+          <motion.div variants={fadeUp} className="flex items-center justify-between px-4 py-3 rounded-[12px] mb-2"
+            style={{ background: 'var(--sand-card)', border: '1px solid rgba(13,13,13,.07)' }}>
+            <div className="text-[11px] text-[#0D0D0D]/40">Al mes pagas menos que…</div>
+            <motion.div
+              key={`${compIdx}-${net}`}
+              animate={{ opacity: compVisible ? 1 : 0 }}
+              transition={{ duration: 0.3 }}
+              className="text-[12px] font-semibold text-[#0D0D0D]">
+              {validComps[compIdx % validComps.length]?.text ?? ''}
+            </motion.div>
+          </motion.div>
+        )}
+
         {/* Breakdown */}
         {gross > 0 && (
           <motion.div variants={fadeUp} className="rounded-[14px] mt-1 overflow-hidden border border-[#0D0D0D]/[0.07]"
@@ -692,8 +696,10 @@ export default function HomePage() {
 
       {/* Onboarding overlay (shown on first activation attempt) */}
       {showOnboarding && (
-        <div className="fixed inset-0 z-[100]">
-          <Onboarding inline onComplete={handleOnboardingComplete} />
+        <div className="fixed inset-0 z-[100] flex justify-center items-stretch">
+          <div className="w-full h-full" style={{ maxWidth: 430 }}>
+            <Onboarding inline onComplete={handleOnboardingComplete} />
+          </div>
         </div>
       )}
     </div>
