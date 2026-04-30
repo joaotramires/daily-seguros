@@ -260,13 +260,13 @@ export default function HomePage() {
     setTimeout(() => window.location.reload(), 100)
   }
 
-  const hasPet = mascotaType && mascotaType !== 'No tengo'
+  function getComp(price: number): string {
+    return COMPS.find(c => price < c.max || c.max === Infinity)?.text ?? ''
+  }
 
   const PRODUCTS_DISPLAY = [
-    { id: 'home' as const, label: 'Hogar',   icon: '🏠', color: '#1D9E75', desc: 'Alquilado o recién comprado' },
-    ...(hasPet
-      ? [{ id: 'pet' as const, label: 'Mascota', icon: '🐾', color: '#D85A30', desc: `${mascotaType}` }]
-      : []),
+    { id: 'home' as const, label: 'Hogar',   icon: '🏠', color: '#1D9E75', desc: 'Alquilado o recién comprado', desde: 10.80 },
+    { id: 'pet'  as const, label: 'Mascota', icon: '🐾', color: '#D85A30', desc: mascotaType || 'Perro o gato',  desde: 11.57 },
   ]
 
   return (
@@ -392,7 +392,7 @@ export default function HomePage() {
                           ) : `€${price.toFixed(2)}/mes`
                         ) : price > 0
                           ? `€${price.toFixed(2)}/mes`
-                          : product.id === 'home' ? 'Desde €10.80/mes' : 'Desde €26.40/mes'}
+                          : <><span>Desde €{product.desde.toFixed(2)}/mes</span><span className="ml-1.5 opacity-50">· {getComp(product.desde)}</span></>}
                       </div>
                     )}
                     {isCancelling && (
@@ -475,25 +475,6 @@ export default function HomePage() {
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Add-pet card (shown when user has no pet set) */}
-        {!hasPet && (
-          <motion.div variants={fadeUp}
-            className="rounded-[14px] p-4 mb-2 flex items-center gap-3 border border-dashed"
-            style={{ borderColor: 'rgba(216,90,48,.3)', background: 'rgba(216,90,48,.03)' }}>
-            <div className="w-[42px] h-[42px] rounded-[11px] flex items-center justify-center text-[20px] flex-shrink-0"
-              style={{ background: 'rgba(216,90,48,.08)' }}>🐾</div>
-            <div className="flex-1">
-              <div className="text-[13px] font-semibold text-[#0D0D0D]">Seguro Mascota</div>
-              <div className="text-[11px] text-[#0D0D0D]/40 mt-0.5">Desde €26.40/mes · Perro o gato</div>
-            </div>
-            <motion.button whileTap={tapScale} onClick={() => setSurveyProduct('pet')}
-              className="text-[12px] font-bold text-white px-3 py-2 rounded-[9px]"
-              style={{ background: '#D85A30' }}>
-              Añadir
-            </motion.button>
-          </motion.div>
-        )}
 
         {/* Viaje add-on card */}
         <motion.div variants={fadeUp}
