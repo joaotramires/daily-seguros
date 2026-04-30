@@ -265,7 +265,7 @@ export default function HomePage() {
   }
 
   const PRODUCTS_DISPLAY = [
-    { id: 'home' as const, label: 'Hogar',   icon: '🏠', color: '#1D9E75', desc: 'Alquilado o recién comprado', desde: 10.80 },
+    { id: 'home' as const, label: 'Hogar',   icon: '🏠', color: '#1D9E75', desc: 'Alquilado o recién comprado', desde: 15.90 },
     { id: 'pet'  as const, label: 'Mascota', icon: '🐾', color: '#D85A30', desc: mascotaType || 'Perro o gato',  desde: 11.57 },
   ]
 
@@ -390,9 +390,7 @@ export default function HomePage() {
                               <span style={{ color: product.color }}>€{discPrice.toFixed(2)}/mes</span>
                             </span>
                           ) : `€${price.toFixed(2)}/mes`
-                        ) : price > 0
-                          ? `€${price.toFixed(2)}/mes`
-                          : <><span>Desde €{product.desde.toFixed(2)}/mes</span><span className="ml-1.5 opacity-50">· {getComp(product.desde)}</span></>}
+                        ) : <><span>Desde €{product.desde.toFixed(2)}/mes</span><span className="ml-1.5 opacity-50">· {getComp(product.desde)}</span></>}
                       </div>
                     )}
                     {isCancelling && (
