@@ -6,23 +6,19 @@ import { fadeUp, stagger, tapScale } from '@/lib/animations'
 const STREAMING_TIERS = [
   {
     friends: 3,
-    label: 'Netflix gratis · 1 año',
-    badge: '€156 de valor',
-    icons: [{ emoji: '🍿', color: '#E50914' }],
-    color: '#E50914',
-    bg: 'rgba(229,9,20,.07)',
+    headline: '1 año de Netflix gratis',
+    sub: '€156 de valor',
+    platforms: [{ label: 'Netflix', color: '#E50914' }],
   },
   {
     friends: 5,
-    label: 'Netflix + HBO + Disney+',
-    badge: 'Mientras seas miembro',
-    icons: [
-      { emoji: '🍿', color: '#E50914' },
-      { emoji: '🎭', color: '#7B2FBE' },
-      { emoji: '🏰', color: '#0063E5' },
+    headline: 'Los tres grandes, para siempre',
+    sub: 'Mientras seas miembro Daily',
+    platforms: [
+      { label: 'Netflix',  color: '#E50914' },
+      { label: 'HBO Max',  color: '#7B2FBE' },
+      { label: 'Disney+',  color: '#0063E5' },
     ],
-    color: '#1D9E75',
-    bg: 'rgba(29,158,117,.07)',
   },
 ]
 
@@ -100,16 +96,10 @@ export default function ClubPage() {
     <div className="px-4 py-4 pb-6">
       <motion.div variants={stagger} initial="hidden" animate="visible">
 
-        {/* Hero */}
-        <motion.div variants={fadeUp} className="rounded-[20px] p-5 mb-4"
-          style={{ background: '#0D0D0D' }}>
-          <div className="text-[11px] font-bold tracking-[1.5px] uppercase mb-1" style={{ color: '#C9A84C' }}>
-            ✦ Daily Club
-          </div>
-          <div className="text-[22px] font-bold text-white tracking-tight leading-snug">
-            Todo lo que tienes<br />como miembro
-          </div>
-          <div className="text-[12px] text-white/35 mt-1.5">Ventajas · Impacto · Referidos</div>
+        {/* Title */}
+        <motion.div variants={fadeUp} className="mb-4">
+          <div className="text-[11px] font-bold tracking-[1.5px] uppercase mb-0.5" style={{ color: '#C9A84C' }}>✦ Daily Club</div>
+          <div className="text-[24px] font-bold text-[#0D0D0D] tracking-tight">Tu membresía</div>
         </motion.div>
 
         {/* ── Referral section (always visible) ── */}
@@ -118,10 +108,8 @@ export default function ClubPage() {
           <div className="p-4">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-[1px] mb-0.5" style={{ color: '#1D9E75' }}>
-                  Invita y gana
-                </div>
                 <div className="text-[16px] font-bold text-[#0D0D0D] tracking-tight">Invita amigos, gana streaming</div>
+                <div className="text-[12px] text-[#0D0D0D]/40 mt-0.5">Comparte tu código, desbloquea plataformas</div>
               </div>
               <div className="w-10 h-10 rounded-full flex items-center justify-center text-[20px]"
                 style={{ background: 'rgba(29,158,117,.1)' }}>🎁</div>
@@ -144,44 +132,38 @@ export default function ClubPage() {
           {/* Streaming tiers */}
           <div className="border-t border-[#0D0D0D]/[0.06]">
             {STREAMING_TIERS.map((tier, i) => {
-              const referrals = 0 // mocked
+              const referrals = 0
               const unlocked  = referrals >= tier.friends
               const pct       = Math.min(100, Math.round((referrals / tier.friends) * 100))
               return (
-                <div key={tier.label}
-                  className={`flex items-center gap-3 px-4 py-3.5 ${i < STREAMING_TIERS.length - 1 ? 'border-b border-[#0D0D0D]/[0.05]' : ''}`}>
-                  {/* Service icons */}
-                  <div className="flex -space-x-1.5 flex-shrink-0">
-                    {tier.icons.map(ic => (
-                      <div key={ic.emoji}
-                        className="w-8 h-8 rounded-[9px] flex items-center justify-center text-[15px] border-2 border-[var(--sand-card)]"
-                        style={{ background: `${ic.color}18` }}>
-                        {ic.emoji}
+                <div key={tier.headline}
+                  className={`px-4 py-3.5 ${i < STREAMING_TIERS.length - 1 ? 'border-b border-[#0D0D0D]/[0.05]' : ''}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      <div className="flex flex-wrap gap-1.5 mb-1.5">
+                        {tier.platforms.map(p => (
+                          <span key={p.label} className="text-[11px] font-bold px-2 py-0.5 rounded-[6px]"
+                            style={{ background: p.color + '18', color: p.color }}>
+                            {p.label}
+                          </span>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[13px] font-bold text-[#0D0D0D]">{tier.label}</span>
-                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                        style={{ background: tier.bg, color: tier.color }}>
-                        {tier.badge}
-                      </span>
+                      <div className="text-[13px] font-bold text-[#0D0D0D]">{tier.headline}</div>
+                      <div className="text-[11px] text-[#0D0D0D]/40 mt-0.5">{tier.sub}</div>
                     </div>
-                    <div className="flex items-center gap-2 mt-1.5">
-                      <div className="flex-1 h-[3px] rounded-full overflow-hidden" style={{ background: 'rgba(13,13,13,.08)' }}>
-                        <div className="h-full rounded-full transition-all duration-500"
-                          style={{ width: `${pct}%`, background: tier.color }} />
-                      </div>
-                      <span className="text-[10px] text-[#0D0D0D]/35 flex-shrink-0">
-                        {referrals}/{tier.friends} amigos
-                      </span>
-                    </div>
+                    <span className="text-[14px] flex-shrink-0 mt-0.5" style={{ opacity: unlocked ? 1 : 0.3 }}>
+                      {unlocked ? '✓' : '🔒'}
+                    </span>
                   </div>
-                  <span className="text-[14px] flex-shrink-0" style={{ opacity: unlocked ? 1 : 0.25 }}>
-                    {unlocked ? '✓' : '🔒'}
-                  </span>
+                  <div className="flex items-center gap-2 mt-2">
+                    <div className="flex-1 h-[3px] rounded-full overflow-hidden" style={{ background: 'rgba(13,13,13,.08)' }}>
+                      <div className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${pct}%`, background: tier.platforms[0].color }} />
+                    </div>
+                    <span className="text-[10px] text-[#0D0D0D]/35 flex-shrink-0">
+                      {referrals}/{tier.friends} amigos
+                    </span>
+                  </div>
                 </div>
               )
             })}

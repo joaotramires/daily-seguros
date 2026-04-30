@@ -7,7 +7,7 @@ interface Props { onComplete: () => void; inline?: boolean }
 
 type Step = 1 | 2 | 3
 
-const LIVING = ['Estudio', 'Piso compartido', 'Piso propio', 'Casa'] as const
+const LIVING = ['Estudio', 'Piso compartido', 'Piso en propiedad', 'Casa'] as const
 const STUFF  = ['Menos de €5.000', '€5.000 – €15.000', 'Más de €15.000'] as const
 const PET_OPS = [
   { label: 'No tengo',     emoji: '🚫' },
@@ -23,12 +23,12 @@ const PET_PRICES: Record<string, number> = {
 }
 
 function calcHogar(living: string, stuff: string): number {
-  let base = 18.0
-  if (living === 'Piso compartido') base += 1.5
-  if (living === 'Piso propio')     base += 3.0
-  if (living === 'Casa')            base += 5.0
-  if (stuff === '€5.000 – €15.000') base += 2.0
-  if (stuff === 'Más de €15.000')   base += 4.5
+  let base = 9.0
+  if (living === 'Piso compartido')   base = 10.0
+  if (living === 'Piso en propiedad') base = 12.0
+  if (living === 'Casa')              base = 14.0
+  if (stuff === '€5.000 – €15.000')  base += 1.5
+  if (stuff === 'Más de €15.000')    base += 3.5
   return Math.round(base * 1.2 * 10) / 10
 }
 
@@ -61,7 +61,8 @@ export default function Onboarding({ onComplete, inline }: Props) {
         <motion.div key="s1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.25, ease: 'easeOut' }}>
           <div className="text-[10px] font-bold text-[#0D0D0D]/35 uppercase tracking-[1px] mb-1">Paso 1 de 3</div>
-          <h2 className="text-[22px] font-bold text-[#0D0D0D] mb-5 tracking-tight">Cuéntanos sobre tu hogar</h2>
+          <h2 className="text-[22px] font-bold text-[#0D0D0D] mb-1 tracking-tight">Cuéntanos sobre tu hogar</h2>
+          <p className="text-[13px] text-[#0D0D0D]/40 mb-5">Solo aseguramos tus cosas, no las paredes — eso es del propietario.</p>
 
           <div className="text-[11px] font-bold text-[#0D0D0D]/40 uppercase tracking-[0.8px] mb-2">¿Dónde vives?</div>
           <div className="flex flex-wrap gap-2 mb-5">
@@ -148,6 +149,19 @@ export default function Onboarding({ onComplete, inline }: Props) {
                 </div>
               </div>
             )}
+          </div>
+
+          <div className="flex flex-col gap-1.5 mb-4">
+            {[
+              'Daños eléctricos incluidos de serie',
+              'Indemnización en efectivo — tú eliges al reparador',
+              'Cancela cuando quieras, sin llamadas ni papeleo',
+            ].map(item => (
+              <div key={item} className="flex items-center gap-2">
+                <span className="text-[11px] font-bold text-[#1D9E75]">✓</span>
+                <span className="text-[12px] text-[#0D0D0D]/55">{item}</span>
+              </div>
+            ))}
           </div>
 
           <motion.button whileTap={tapScale} onClick={finish}

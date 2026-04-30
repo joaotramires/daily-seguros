@@ -26,6 +26,7 @@ const COVERAGES: Record<string, string[]> = {
     'Responsabilidad civil frente a vecinos',
     'Asistencia en hogar 24h (cerrajero, fontanero)',
     'Fenómenos meteorológicos (granizo, viento)',
+    'Indemnización en efectivo — tú eliges al reparador',
   ],
   pet: [
     'Consultas veterinarias y urgencias',
@@ -276,7 +277,7 @@ export default function HomePage() {
           <div className="text-[11px] text-white/30 mt-2 uppercase tracking-[0.8px] font-medium">
             {activeCount === 0 ? 'Activa tu primer seguro ↓' : `al mes · ${activeCount} activo${activeCount !== 1 ? 's' : ''}`}
           </div>
-          {net > 0 && (
+          {net > 0 ? (
             <motion.div
               key={`${compIdx}-${net}`}
               animate={{ opacity: compVisible ? 1 : 0 }}
@@ -284,6 +285,8 @@ export default function HomePage() {
               className="text-[12px] text-white/50 mt-2">
               {validComps[compIdx % validComps.length]?.text ?? ''}
             </motion.div>
+          ) : (
+            <div className="text-[12px] text-white/35 mt-2">Desde €10.80/mes · menos que un café al día ☕</div>
           )}
         </motion.div>
 
