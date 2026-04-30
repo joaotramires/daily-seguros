@@ -41,6 +41,13 @@ export default function Onboarding({ onComplete, inline }: Props) {
   const hogarPrice   = living && stuff ? calcHogar(living, stuff) : 0
   const mascotaPrice = pet ? (PET_PRICES[pet] ?? 0) : 0
 
+  const totalStep3   = hogarPrice + (pet && pet !== 'No tengo' ? mascotaPrice : 0)
+  const compText     = totalStep3 < 15 ? 'un café al día ☕'
+    : totalStep3 < 25 ? '2 copas en Malasaña 🍷'
+    : totalStep3 < 35 ? 'el gym que no usas 💪'
+    : totalStep3 < 45 ? 'una cena para dos 🍝'
+    : 'Spotify + Netflix juntos 🎬'
+
   function finish() {
     localStorage.setItem('daily_onboarding_complete', 'true')
     localStorage.setItem('daily_hogar_price', String(hogarPrice))
@@ -149,6 +156,12 @@ export default function Onboarding({ onComplete, inline }: Props) {
                 </div>
               </div>
             )}
+          </div>
+
+          <div className="flex items-center justify-center gap-1.5 mb-4 px-2 py-2.5 rounded-[10px]"
+            style={{ background: 'rgba(13,13,13,.04)' }}>
+            <span className="text-[12px] text-[#0D0D0D]/40">Al mes, menos que</span>
+            <span className="text-[12px] font-semibold text-[#0D0D0D]/70">{compText}</span>
           </div>
 
           <div className="flex flex-col gap-1.5 mb-4">

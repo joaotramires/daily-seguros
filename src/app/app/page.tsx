@@ -93,6 +93,9 @@ export default function HomePage() {
   // Pet picker (for users who get a pet after onboarding)
   const [petPickerOpen, setPetPickerOpen] = useState(false)
 
+  const [referralCode, setReferralCode] = useState<string | null>(null)
+  const [refCopied, setRefCopied]       = useState(false)
+
   useEffect(() => {
     const hogarPrice   = parseFloat(localStorage.getItem('daily_hogar_price') || '0')
     const mascotaPrice = parseFloat(localStorage.getItem('daily_mascota_price') || '0')
@@ -129,6 +132,7 @@ export default function HomePage() {
           if (newActive.pet && !chip) setChipBannerVisible(true)
         }
         if (data.loyaltyMonths) setLoyaltyMonths(data.loyaltyMonths)
+        if (data.referralCode) setReferralCode(data.referralCode)
       })
       .catch(console.error)
   }, [])
@@ -239,6 +243,13 @@ export default function HomePage() {
     setChipModalOpen(false)
   }
 
+  function copyReferral() {
+    if (!referralCode) return
+    navigator.clipboard.writeText(referralCode).catch(() => {})
+    setRefCopied(true)
+    setTimeout(() => setRefCopied(false), 2000)
+  }
+
   function handleOnboardingComplete() {
     const hp = parseFloat(localStorage.getItem('daily_hogar_price') || '0')
     const mp = parseFloat(localStorage.getItem('daily_mascota_price') || '0')
@@ -267,6 +278,45 @@ export default function HomePage() {
     <div className="px-4 py-4 pb-6 relative">
       <motion.div variants={stagger} initial="hidden" animate="visible">
 
+        {/* Referral box */}
+        <motion.div variants={fadeUp} className="rounded-[20px] overflow-hidden mb-3">
+          <div className="p-5" style={{ background: '#0D0D0D' }}>
+            <div className="flex items-start gap-3 mb-4">
+              <div className="flex-1">
+                <div className="text-[10px] font-bold uppercase tracking-[1.5px] mb-2" style={{ color: 'rgba(255,255,255,.3)' }}>
+                  Daily Club · Recompensas
+                </div>
+                <div className="text-[26px] font-bold text-white leading-tight tracking-tight">
+                  Netflix gratis.{' '}
+                  <span style={{ color: '#E50914' }}>1 año.</span>
+                </div>
+                <div className="text-[12px] mt-1" style={{ color: 'rgba(255,255,255,.4)' }}>
+                  Invita 3 amigos con tu código
+                </div>
+              </div>
+              <div className="w-11 h-11 rounded-[10px] flex items-center justify-center text-[22px] font-black text-white flex-shrink-0"
+                style={{ background: '#E50914', fontFamily: 'Georgia, serif', letterSpacing: '-1px' }}>N</div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 px-3.5 py-2.5 rounded-[10px] font-bold tracking-[3px] text-[14px] text-white"
+                style={{ background: 'rgba(255,255,255,.08)' }}>
+                {referralCode ? referralCode.toUpperCase() : '· · · · · ·'}
+              </div>
+              <motion.button whileTap={tapScale} onClick={copyReferral}
+                className="px-4 py-2.5 rounded-[10px] text-[12px] font-bold transition-all"
+                style={refCopied ? { background: 'rgba(29,158,117,.9)', color: 'white' } : { background: '#E50914', color: 'white' }}>
+                {refCopied ? '✓ Copiado' : 'Copiar'}
+              </motion.button>
+            </div>
+            <div className="flex items-center gap-2 mt-3">
+              <div className="flex-1 h-[2px] rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,.1)' }}>
+                <div className="h-full rounded-full w-0" style={{ background: '#E50914' }} />
+              </div>
+              <div className="text-[10px]" style={{ color: 'rgba(255,255,255,.25)' }}>0 / 3 amigos</div>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Hero card */}
         <motion.div variants={fadeUp} className="rounded-[20px] p-6 mb-3 text-center"
           style={{ background: '#0D0D0D' }}>
@@ -293,32 +343,6 @@ export default function HomePage() {
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Loyalty card */}
-        <motion.div variants={fadeUp} className="rounded-[18px] p-4 mb-3"
-          style={{ background: 'var(--sand-card)', border: '1px solid rgba(29,158,117,.2)' }}>
-          <div className="flex justify-between items-start">
-            <div>
-              <div className="text-[10px] font-bold text-[#1D9E75] uppercase tracking-[1px]">Mes {loyaltyMonths} con Daily</div>
-              <div className="text-[20px] font-bold text-[#0D0D0D] mt-1 tracking-tight">{totalDisc}% de descuento</div>
-              <div className="text-[11px] text-[#0D0D0D]/40 mt-0.5">Para siempre, mientras sigas</div>
-            </div>
-            <div className="rounded-[10px] px-3 py-2 text-center" style={{ background: 'rgba(29,158,117,.12)' }}>
-              <div className="text-[9px] font-bold text-[#1D9E75] uppercase tracking-[0.5px]">Ahorrado</div>
-              <div className="text-[14px] font-bold text-[#1D9E75] mt-0.5">€{saved}</div>
-            </div>
-          </div>
-          <div className="h-[5px] rounded-full mt-3 mb-1.5 overflow-hidden" style={{ background: 'rgba(13,13,13,.08)' }}>
-            <motion.div className="h-full rounded-full" style={{ background: 'linear-gradient(90deg,#1D9E75,#25c48a)' }}
-              initial={{ width: 0 }} animate={{ width: `${streakPct}%` }} transition={{ duration: 0.8, ease: 'easeOut' }} />
-          </div>
-          {nextTier && (
-            <div className="flex justify-between text-[11px] text-[#0D0D0D]/30">
-              <span><strong className="text-[#0D0D0D]/60">{nextTier.months - loyaltyMonths} meses</strong> para el siguiente nivel</span>
-              <span className="text-[#1D9E75] font-bold">{nextTier.disc}%</span>
-            </div>
-          )}
-        </motion.div>
 
         {/* Insurance cards */}
         {PRODUCTS_DISPLAY.map(product => {
@@ -511,21 +535,6 @@ export default function HomePage() {
           )}
         </motion.div>
 
-        {/* Comparison strip */}
-        {net > 0 && (
-          <motion.div variants={fadeUp} className="flex items-center justify-between px-4 py-3 rounded-[12px] mb-2"
-            style={{ background: 'var(--sand-card)', border: '1px solid rgba(13,13,13,.07)' }}>
-            <div className="text-[11px] text-[#0D0D0D]/40">Al mes pagas menos que…</div>
-            <motion.div
-              key={`${compIdx}-${net}`}
-              animate={{ opacity: compVisible ? 1 : 0 }}
-              transition={{ duration: 0.3 }}
-              className="text-[12px] font-semibold text-[#0D0D0D]">
-              {validComps[compIdx % validComps.length]?.text ?? ''}
-            </motion.div>
-          </motion.div>
-        )}
-
         {/* Breakdown */}
         {gross > 0 && (
           <motion.div variants={fadeUp} className="rounded-[14px] mt-1 overflow-hidden border border-[#0D0D0D]/[0.07]"
@@ -564,6 +573,32 @@ export default function HomePage() {
             </AnimatePresence>
           </motion.div>
         )}
+
+        {/* Loyalty card */}
+        <motion.div variants={fadeUp} className="rounded-[18px] p-4 mt-2 mb-2"
+          style={{ background: 'var(--sand-card)', border: '1px solid rgba(29,158,117,.2)' }}>
+          <div className="flex justify-between items-start">
+            <div>
+              <div className="text-[10px] font-bold text-[#1D9E75] uppercase tracking-[1px]">Mes {loyaltyMonths} con Daily</div>
+              <div className="text-[20px] font-bold text-[#0D0D0D] mt-1 tracking-tight">{totalDisc}% de descuento</div>
+              <div className="text-[11px] text-[#0D0D0D]/40 mt-0.5">Para siempre, mientras sigas</div>
+            </div>
+            <div className="rounded-[10px] px-3 py-2 text-center" style={{ background: 'rgba(29,158,117,.12)' }}>
+              <div className="text-[9px] font-bold text-[#1D9E75] uppercase tracking-[0.5px]">Ahorrado</div>
+              <div className="text-[14px] font-bold text-[#1D9E75] mt-0.5">€{saved}</div>
+            </div>
+          </div>
+          <div className="h-[5px] rounded-full mt-3 mb-1.5 overflow-hidden" style={{ background: 'rgba(13,13,13,.08)' }}>
+            <motion.div className="h-full rounded-full" style={{ background: 'linear-gradient(90deg,#1D9E75,#25c48a)' }}
+              initial={{ width: 0 }} animate={{ width: `${streakPct}%` }} transition={{ duration: 0.8, ease: 'easeOut' }} />
+          </div>
+          {nextTier && (
+            <div className="flex justify-between text-[11px] text-[#0D0D0D]/30">
+              <span><strong className="text-[#0D0D0D]/60">{nextTier.months - loyaltyMonths} meses</strong> para el siguiente nivel</span>
+              <span className="text-[#1D9E75] font-bold">{nextTier.disc}%</span>
+            </div>
+          )}
+        </motion.div>
 
         <div className="text-center text-[12px] text-[#0D0D0D]/20 mt-4">Cancela con un toque. Siempre.</div>
       </motion.div>
