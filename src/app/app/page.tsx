@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Toggle from '@/components/ui/Toggle'
 import SurveyModal from '@/components/modals/SurveyModal'
 import Sheet from '@/components/ui/Sheet'
-import Onboarding from '@/components/Onboarding'
 import { getBundleDiscount, getLoyaltyDiscount } from '@/lib/products'
 import { fadeUp, stagger, tapScale } from '@/lib/animations'
 import type { ProductId } from '@/types'
@@ -38,13 +37,6 @@ const COVERAGES: Record<string, string[]> = {
   ],
 }
 
-const PET_OPTIONS = [
-  { label: 'Perro pequeño', emoji: '🐶', price: 33.6 },
-  { label: 'Perro mediano', emoji: '🐕', price: 40.8 },
-  { label: 'Perro grande',  emoji: '🦮', price: 50.4 },
-  { label: 'Gato',          emoji: '🐱', price: 26.4 },
-]
-
 function endOfMonth() {
   const d = new Date()
   return new Date(d.getFullYear(), d.getMonth() + 1, 0)
@@ -59,48 +51,34 @@ export default function HomePage() {
   const [mascotaType, setMascotaType] = useState('')
   const [policyIds, setPolicyIds]     = useState<Record<string, string>>({})
   const [loyaltyMonths, setLoyaltyMonths] = useState(0)
+  const [customerName, setCustomerName]   = useState('')
 
-  const [cancelling, setCancelling]   = useState<Record<string, string>>({})
+  const [cancelling, setCancelling]     = useState<Record<string, string>>({})
   const [cancelTarget, setCancelTarget] = useState<'home' | 'pet' | null>(null)
   const [cancelTooltip, setCancelTooltip] = useState<'home' | 'pet' | null>(null)
 
-  const [chipInput, setChipInput]     = useState('')
-  const [chipSaved, setChipSaved]     = useState(false)
+  const [chipInput, setChipInput]         = useState('')
+  const [chipSaved, setChipSaved]         = useState(false)
   const [chipModalOpen, setChipModalOpen] = useState(false)
   const [chipBannerVisible, setChipBannerVisible] = useState(false)
 
-  const [compIdx, setCompIdx]         = useState(0)
+  const [compIdx, setCompIdx]     = useState(0)
   const [compVisible, setCompVisible] = useState(true)
   const compTimer = useRef<ReturnType<typeof setTimeout>>()
 
   const [surveyProduct, setSurveyProduct] = useState<ProductId | null>(null)
   const [travelActive, setTravelActive]   = useState(false)
 
-  const [bdOpen, setBdOpen]           = useState(false)
-  const [openCov, setOpenCov]         = useState<Record<string, boolean>>({})
+  const [bdOpen, setBdOpen]   = useState(false)
+  const [openCov, setOpenCov] = useState<Record<string, boolean>>({})
 
   const [showRegister, setShowRegister]   = useState(false)
   const [pendingProduct, setPendingProduct] = useState<'home' | 'pet' | null>(null)
   const [regForm, setRegForm]             = useState({ name: '', email: '', phone: '' })
   const [regLoading, setRegLoading]       = useState(false)
 
-  const [activating, setActivating]   = useState<'home' | 'pet' | null>(null)
-
-  // Onboarding overlay (triggered on first activation attempt)
-  const [showOnboarding, setShowOnboarding]     = useState(false)
-  const [pendingActivation, setPendingActivation] = useState<'home' | 'pet' | null>(null)
-
-  const [onboardingProduct, setOnboardingProduct] = useState<'home' | 'pet'>('home')
-  const [isLoggedIn, setIsLoggedIn]               = useState(false)
-
-  const [paySheetOpen, setPaySheetOpen] = useState(false)
-  const [payProduct, setPayProduct]     = useState<'home' | 'pet' | null>(null)
-  const [payPrice, setPayPrice]         = useState(0)
-  const [payMethod, setPayMethod]       = useState<'card' | 'bizum' | 'apple'>('card')
-  const [payCardNum, setPayCardNum]     = useState('')
-  const [payExpiry, setPayExpiry]       = useState('')
-  const [payCvc, setPayCvc]             = useState('')
-  const [payPhone, setPayPhone]         = useState('')
+  const [activating, setActivating] = useState<'home' | 'pet' | null>(null)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
 
   const [referralCode, setReferralCode] = useState<string | null>(null)
   const [refCopied, setRefCopied]       = useState(false)
@@ -110,6 +88,7 @@ export default function HomePage() {
     const mascotaPrice = parseFloat(localStorage.getItem('daily_mascota_price') || '0')
     const mascType     = localStorage.getItem('daily_mascota_type') || ''
     const chip         = localStorage.getItem('daily_chip_saved') === 'true'
+    const storedName   = localStorage.getItem('customerName') || ''
     if (localStorage.getItem('daily_travel_active') === 'true') setTravelActive(true)
     const rawCancelling: Record<string, string> = JSON.parse(localStorage.getItem('daily_cancelling') || '{}')
     const now = Date.now()
@@ -121,6 +100,7 @@ export default function HomePage() {
     setMascotaType(mascType)
     setChipSaved(chip)
     setCancelling(validCancelling)
+    setCustomerName(storedName)
 
     const customerId = localStorage.getItem('customerId')
     if (!customerId) return
@@ -142,7 +122,7 @@ export default function HomePage() {
           if (newActive.pet && !chip) setChipBannerVisible(true)
         }
         if (data.loyaltyMonths) setLoyaltyMonths(data.loyaltyMonths)
-        if (data.referralCode) setReferralCode(data.referralCode)
+        if (data.referralCode)  setReferralCode(data.referralCode)
       })
       .catch(console.error)
   }, [])
@@ -208,9 +188,7 @@ export default function HomePage() {
     if (active[id]) {
       setCancelTarget(id)
     } else if (prices[id] === 0) {
-      setPendingActivation(id)
-      setOnboardingProduct(id)
-      setShowOnboarding(true)
+      setSurveyProduct(id as ProductId)
     } else {
       activateDirect(id)
     }
@@ -239,6 +217,7 @@ export default function HomePage() {
       if (data.customerId) {
         localStorage.setItem('customerId', data.customerId)
         localStorage.setItem('customerName', regForm.name)
+        setIsLoggedIn(true)
       }
     } catch (e) { console.error(e) }
     setRegLoading(false)
@@ -261,54 +240,24 @@ export default function HomePage() {
     setTimeout(() => setRefCopied(false), 2000)
   }
 
-  function handleOnboardingComplete() {
-    const hp = parseFloat(localStorage.getItem('daily_hogar_price') || '0')
-    const mp = parseFloat(localStorage.getItem('daily_mascota_price') || '0')
-    const mt = localStorage.getItem('daily_mascota_type') || ''
-    setPrices({ home: hp, pet: mp })
-    setMascotaType(mt)
-    setShowOnboarding(false)
-    if (pendingActivation) {
-      const id = pendingActivation
-      const price = id === 'home' ? hp : mp
-      setPendingActivation(null)
-      setPayProduct(id)
-      setPayPrice(price)
-      setPaySheetOpen(true)
+  // Called when SurveyModal completes any product activation
+  function handleActivated(id: ProductId, price: number, policyId?: string, answers?: Record<string, string>) {
+    if (id === 'travel') {
+      setTravelActive(true)
+      localStorage.setItem('daily_travel_active', 'true')
+      return
     }
-  }
-
-  async function handlePayment() {
-    if (!payProduct) return
-    let cid = localStorage.getItem('customerId')
-    if (!cid) {
-      if (!regForm.name || !regForm.email) return
-      setRegLoading(true)
-      try {
-        const res  = await fetch('/api/register-customer', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...regForm, city: 'Madrid' }),
-        })
-        const data = await res.json()
-        if (data.customerId) {
-          localStorage.setItem('customerId', data.customerId)
-          localStorage.setItem('customerName', regForm.name)
-          cid = data.customerId
-          setIsLoggedIn(true)
-        }
-      } catch (e) { console.error(e) }
-      setRegLoading(false)
+    if (id === 'home') {
+      localStorage.setItem('daily_hogar_price', String(price))
+    } else if (id === 'pet') {
+      const typeAns  = answers?.type || 'Perro'
+      const sizeAns  = answers?.size || ''
+      const mascLabel = sizeAns ? `${typeAns} ${sizeAns.toLowerCase()}` : typeAns
+      localStorage.setItem('daily_mascota_type', mascLabel)
+      localStorage.setItem('daily_mascota_price', String(price))
     }
-    if (!cid) return
-    const pmLabel = payMethod === 'card' ? 'Tarjeta' : payMethod === 'bizum' ? 'Bizum' : 'Apple Pay'
-    const productName = payProduct === 'home' ? 'Hogar' : `Mascota (${mascotaType})`
-    const msg = encodeURIComponent(
-      `¡Hola Daily! Acabo de contratar el Seguro ${productName} por €${payPrice.toFixed(2)}/mes. Método: ${pmLabel}. ¡Gracias! 🏠`
-    )
-    window.open(`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER}?text=${msg}`, '_blank')
-    setPaySheetOpen(false)
-    setPayMethod('card'); setPayCardNum(''); setPayExpiry(''); setPayCvc(''); setPayPhone('')
-    await activateDirect(payProduct, payPrice)
+    // Reload so layout avatar and all DB-driven state refresh cleanly
+    setTimeout(() => window.location.reload(), 100)
   }
 
   const hasPet = mascotaType && mascotaType !== 'No tengo'
@@ -527,7 +476,7 @@ export default function HomePage() {
           )}
         </AnimatePresence>
 
-        {/* Add-pet card (shown when user has no pet type set) */}
+        {/* Add-pet card (shown when user has no pet set) */}
         {!hasPet && (
           <motion.div variants={fadeUp}
             className="rounded-[14px] p-4 mb-2 flex items-center gap-3 border border-dashed"
@@ -538,11 +487,7 @@ export default function HomePage() {
               <div className="text-[13px] font-semibold text-[#0D0D0D]">Seguro Mascota</div>
               <div className="text-[11px] text-[#0D0D0D]/40 mt-0.5">Desde €26.40/mes · Perro o gato</div>
             </div>
-            <motion.button whileTap={tapScale} onClick={() => {
-              setPendingActivation('pet')
-              setOnboardingProduct('pet')
-              setShowOnboarding(true)
-            }}
+            <motion.button whileTap={tapScale} onClick={() => setSurveyProduct('pet')}
               className="text-[12px] font-bold text-white px-3 py-2 rounded-[9px]"
               style={{ background: '#D85A30' }}>
               Añadir
@@ -655,12 +600,15 @@ export default function HomePage() {
         <div className="text-center text-[12px] text-[#0D0D0D]/20 mt-4">Cancela con un toque. Siempre.</div>
       </motion.div>
 
-      {/* Travel survey modal */}
+      {/* Survey modal — handles travel, home, and pet */}
       <SurveyModal
         productId={surveyProduct}
         activeCount={activeCount}
         onClose={() => setSurveyProduct(null)}
-        onActivated={(_id, _price) => { setSurveyProduct(null); setTravelActive(true); localStorage.setItem('daily_travel_active', 'true') }}
+        onActivated={handleActivated}
+        customerName={customerName || undefined}
+        isLoggedIn={isLoggedIn}
+        onLoggedIn={(name) => { setIsLoggedIn(true); setCustomerName(name) }}
       />
 
       {/* Cancellation sheet */}
@@ -718,114 +666,7 @@ export default function HomePage() {
         </div>
       </Sheet>
 
-      {/* Payment sheet */}
-      <Sheet open={paySheetOpen} onClose={() => setPaySheetOpen(false)}>
-        <div className="px-5 pt-4 pb-2">
-          <div className="flex justify-between items-center mb-4">
-            <div className="text-[15px] font-bold text-[#0D0D0D]">Confirmar pago</div>
-            <button onClick={() => setPaySheetOpen(false)} className="w-8 h-8 rounded-full flex items-center justify-center text-[14px] text-[#0D0D0D]/40"
-              style={{ background: 'rgba(13,13,13,.07)' }}>✕</button>
-          </div>
-
-          {/* Price summary */}
-          <div className="rounded-[13px] p-4 mb-4 flex items-center justify-between"
-            style={{ background: 'rgba(29,158,117,.08)', border: '1px solid rgba(29,158,117,.2)' }}>
-            <div>
-              <div className="text-[11px] font-bold text-[#1D9E75] uppercase tracking-[0.5px] mb-0.5">
-                {payProduct === 'home' ? 'Seguro Hogar' : `Seguro Mascota · ${mascotaType}`}
-              </div>
-              <div className="text-[11px] text-[#0D0D0D]/40">Sin permanencia · Cancela cuando quieras</div>
-            </div>
-            <div className="text-[20px] font-bold text-[#1D9E75]">
-              €{payPrice.toFixed(2)}<span className="text-[12px] font-medium">/mes</span>
-            </div>
-          </div>
-
-          {/* Registration fields if not logged in */}
-          {!isLoggedIn && (
-            <div className="mb-4">
-              <div className="text-[11px] font-bold text-[#0D0D0D]/40 uppercase tracking-[0.8px] mb-2">Tus datos</div>
-              <input value={regForm.name} onChange={e => setRegForm(r => ({ ...r, name: e.target.value }))}
-                placeholder="Tu nombre" type="text"
-                className="w-full px-4 py-3 rounded-[11px] text-[14px] text-[#0D0D0D] mb-2"
-                style={{ background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.12)' }} />
-              <input value={regForm.email} onChange={e => setRegForm(r => ({ ...r, email: e.target.value }))}
-                placeholder="tu@email.com" type="email"
-                className="w-full px-4 py-3 rounded-[11px] text-[14px] text-[#0D0D0D]"
-                style={{ background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.12)' }} />
-            </div>
-          )}
-
-          {/* Payment method tabs */}
-          <div className="text-[11px] font-bold text-[#0D0D0D]/40 uppercase tracking-[0.8px] mb-2">Método de pago</div>
-          <div className="flex gap-2 mb-4 p-1 rounded-[13px]" style={{ background: 'rgba(13,13,13,.06)' }}>
-            {([
-              { k: 'card'  as const, l: 'Tarjeta',   i: '💳' },
-              { k: 'bizum' as const, l: 'Bizum',      i: '💙' },
-              { k: 'apple' as const, l: 'Apple Pay',  i: '🍎' },
-            ]).map(pm => (
-              <button key={pm.k} onClick={() => setPayMethod(pm.k)}
-                className="flex-1 py-2 rounded-[10px] text-[11px] font-semibold transition-all duration-200"
-                style={payMethod === pm.k
-                  ? { background: '#0D0D0D', color: 'white' }
-                  : { background: 'transparent', color: 'rgba(13,13,13,.45)' }}>
-                {pm.i} {pm.l}
-              </button>
-            ))}
-          </div>
-
-          <AnimatePresence mode="wait">
-            {payMethod === 'card' && (
-              <motion.div key="card" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-                <input value={payCardNum} onChange={e => setPayCardNum(e.target.value.slice(0, 19))}
-                  type="text" inputMode="numeric" placeholder="1234 5678 9012 3456"
-                  className="w-full px-4 py-3 rounded-[11px] text-[14px] text-[#0D0D0D] mb-3"
-                  style={{ background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.12)' }} />
-                <div className="flex gap-3 mb-4">
-                  <input value={payExpiry} onChange={e => setPayExpiry(e.target.value.slice(0, 5))}
-                    placeholder="MM/AA" className="flex-1 px-4 py-3 rounded-[11px] text-[14px] text-[#0D0D0D]"
-                    style={{ background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.12)' }} />
-                  <input value={payCvc} onChange={e => setPayCvc(e.target.value.slice(0, 3))}
-                    type="text" inputMode="numeric" placeholder="CVC"
-                    className="flex-1 px-4 py-3 rounded-[11px] text-[14px] text-[#0D0D0D]"
-                    style={{ background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.12)' }} />
-                </div>
-              </motion.div>
-            )}
-            {payMethod === 'bizum' && (
-              <motion.div key="bizum" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="mb-4">
-                <input value={payPhone} onChange={e => setPayPhone(e.target.value)}
-                  type="tel" placeholder="+34 600 000 000"
-                  className="w-full px-4 py-3 rounded-[11px] text-[14px] text-[#0D0D0D] mb-2"
-                  style={{ background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.12)' }} />
-                <p className="text-[11px] text-[#0D0D0D]/35">Recibirás una solicitud en tu app de banco.</p>
-              </motion.div>
-            )}
-            {payMethod === 'apple' && (
-              <motion.div key="apple" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="mb-4">
-                <div className="rounded-[13px] p-4 flex items-center gap-3 border border-[#0D0D0D]/10"
-                  style={{ background: 'rgba(13,13,13,.04)' }}>
-                  <span className="text-[28px]">🍎</span>
-                  <div>
-                    <div className="text-[13px] font-semibold text-[#0D0D0D]">Apple Pay</div>
-                    <div className="text-[11px] text-[#0D0D0D]/40">Confirma con Face ID o Touch ID</div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <motion.button whileTap={tapScale} onClick={handlePayment}
-            disabled={(!isLoggedIn && (!regForm.name || !regForm.email)) || regLoading}
-            className="w-full py-4 rounded-[13px] text-[15px] font-semibold text-white mb-2 disabled:opacity-40"
-            style={{ background: '#1D9E75' }}>
-            {regLoading ? 'Registrando…' : `Pagar €${payPrice.toFixed(2)}/mes →`}
-          </motion.button>
-          <p className="text-center text-[12px] text-[#0D0D0D]/35 pb-2">🔒 Pago seguro · Cancela cuando quieras</p>
-        </div>
-      </Sheet>
-
-      {/* Register gate */}
+      {/* Register gate (fallback for re-activation without session) */}
       <Sheet open={showRegister} onClose={() => setShowRegister(false)}>
         <div className="px-5 pt-4 pb-2">
           <div className="flex justify-between items-center mb-1">
@@ -855,15 +696,6 @@ export default function HomePage() {
           </motion.button>
         </div>
       </Sheet>
-
-      {/* Onboarding overlay (shown on first activation attempt) */}
-      {showOnboarding && (
-        <div className="fixed inset-0 z-[100] flex justify-center items-stretch">
-          <div className="w-full h-full" style={{ maxWidth: 430 }}>
-            <Onboarding inline product={onboardingProduct} onComplete={handleOnboardingComplete} />
-          </div>
-        </div>
-      )}
     </div>
   )
 }
