@@ -90,8 +90,17 @@ export default function HomePage() {
   const [showOnboarding, setShowOnboarding]     = useState(false)
   const [pendingActivation, setPendingActivation] = useState<'home' | 'pet' | null>(null)
 
-  // Pet picker (for users who get a pet after onboarding)
-  const [petPickerOpen, setPetPickerOpen] = useState(false)
+  const [onboardingProduct, setOnboardingProduct] = useState<'home' | 'pet'>('home')
+  const [isLoggedIn, setIsLoggedIn]               = useState(false)
+
+  const [paySheetOpen, setPaySheetOpen] = useState(false)
+  const [payProduct, setPayProduct]     = useState<'home' | 'pet' | null>(null)
+  const [payPrice, setPayPrice]         = useState(0)
+  const [payMethod, setPayMethod]       = useState<'card' | 'bizum' | 'apple'>('card')
+  const [payCardNum, setPayCardNum]     = useState('')
+  const [payExpiry, setPayExpiry]       = useState('')
+  const [payCvc, setPayCvc]             = useState('')
+  const [payPhone, setPayPhone]         = useState('')
 
   const [referralCode, setReferralCode] = useState<string | null>(null)
   const [refCopied, setRefCopied]       = useState(false)
@@ -115,6 +124,7 @@ export default function HomePage() {
 
     const customerId = localStorage.getItem('customerId')
     if (!customerId) return
+    setIsLoggedIn(true)
     fetch(`/api/get-customer?id=${customerId}`)
       .then(r => r.json())
       .then(data => {
@@ -199,6 +209,7 @@ export default function HomePage() {
       setCancelTarget(id)
     } else if (prices[id] === 0) {
       setPendingActivation(id)
+      setOnboardingProduct(id)
       setShowOnboarding(true)
     } else {
       activateDirect(id)
@@ -261,8 +272,43 @@ export default function HomePage() {
       const id = pendingActivation
       const price = id === 'home' ? hp : mp
       setPendingActivation(null)
-      activateDirect(id, price)
+      setPayProduct(id)
+      setPayPrice(price)
+      setPaySheetOpen(true)
     }
+  }
+
+  async function handlePayment() {
+    if (!payProduct) return
+    let cid = localStorage.getItem('customerId')
+    if (!cid) {
+      if (!regForm.name || !regForm.email) return
+      setRegLoading(true)
+      try {
+        const res  = await fetch('/api/register-customer', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...regForm, city: 'Madrid' }),
+        })
+        const data = await res.json()
+        if (data.customerId) {
+          localStorage.setItem('customerId', data.customerId)
+          localStorage.setItem('customerName', regForm.name)
+          cid = data.customerId
+          setIsLoggedIn(true)
+        }
+      } catch (e) { console.error(e) }
+      setRegLoading(false)
+    }
+    if (!cid) return
+    const pmLabel = payMethod === 'card' ? 'Tarjeta' : payMethod === 'bizum' ? 'Bizum' : 'Apple Pay'
+    const productName = payProduct === 'home' ? 'Hogar' : `Mascota (${mascotaType})`
+    const msg = encodeURIComponent(
+      `¡Hola Daily! Acabo de contratar el Seguro ${productName} por €${payPrice.toFixed(2)}/mes. Método: ${pmLabel}. ¡Gracias! 🏠`
+    )
+    window.open(`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER}?text=${msg}`, '_blank')
+    setPaySheetOpen(false)
+    setPayMethod('card'); setPayCardNum(''); setPayExpiry(''); setPayCvc(''); setPayPhone('')
+    await activateDirect(payProduct, payPrice)
   }
 
   const hasPet = mascotaType && mascotaType !== 'No tengo'
@@ -492,7 +538,11 @@ export default function HomePage() {
               <div className="text-[13px] font-semibold text-[#0D0D0D]">Seguro Mascota</div>
               <div className="text-[11px] text-[#0D0D0D]/40 mt-0.5">Desde €26.40/mes · Perro o gato</div>
             </div>
-            <motion.button whileTap={tapScale} onClick={() => setPetPickerOpen(true)}
+            <motion.button whileTap={tapScale} onClick={() => {
+              setPendingActivation('pet')
+              setOnboardingProduct('pet')
+              setShowOnboarding(true)
+            }}
               className="text-[12px] font-bold text-white px-3 py-2 rounded-[9px]"
               style={{ background: '#D85A30' }}>
               Añadir
@@ -668,35 +718,110 @@ export default function HomePage() {
         </div>
       </Sheet>
 
-      {/* Pet picker sheet */}
-      <Sheet open={petPickerOpen} onClose={() => setPetPickerOpen(false)}>
+      {/* Payment sheet */}
+      <Sheet open={paySheetOpen} onClose={() => setPaySheetOpen(false)}>
         <div className="px-5 pt-4 pb-2">
           <div className="flex justify-between items-center mb-4">
-            <div className="text-[15px] font-bold text-[#0D0D0D]">¿Qué mascota tienes?</div>
-            <button onClick={() => setPetPickerOpen(false)} className="w-8 h-8 rounded-full flex items-center justify-center text-[14px] text-[#0D0D0D]/40"
+            <div className="text-[15px] font-bold text-[#0D0D0D]">Confirmar pago</div>
+            <button onClick={() => setPaySheetOpen(false)} className="w-8 h-8 rounded-full flex items-center justify-center text-[14px] text-[#0D0D0D]/40"
               style={{ background: 'rgba(13,13,13,.07)' }}>✕</button>
           </div>
-          <div className="flex flex-col gap-2 pb-2">
-            {PET_OPTIONS.map(o => (
-              <button key={o.label}
-                onClick={() => {
-                  localStorage.setItem('daily_mascota_type', o.label)
-                  localStorage.setItem('daily_mascota_price', String(o.price))
-                  setMascotaType(o.label)
-                  setPrices(p => ({ ...p, pet: o.price }))
-                  setPetPickerOpen(false)
-                }}
-                className="flex items-center gap-3 px-4 py-3.5 rounded-[13px] border text-left transition-all"
-                style={{ background: 'rgba(13,13,13,.04)', borderColor: 'rgba(13,13,13,.1)' }}>
-                <span className="text-[22px]">{o.emoji}</span>
-                <div className="flex-1">
-                  <div className="text-[14px] font-semibold text-[#0D0D0D]">{o.label}</div>
-                  <div className="text-[11px] text-[#0D0D0D]/40">€{o.price.toFixed(2)}/mes</div>
-                </div>
-                <span className="text-[#0D0D0D]/20 text-[16px]">›</span>
+
+          {/* Price summary */}
+          <div className="rounded-[13px] p-4 mb-4 flex items-center justify-between"
+            style={{ background: 'rgba(29,158,117,.08)', border: '1px solid rgba(29,158,117,.2)' }}>
+            <div>
+              <div className="text-[11px] font-bold text-[#1D9E75] uppercase tracking-[0.5px] mb-0.5">
+                {payProduct === 'home' ? 'Seguro Hogar' : `Seguro Mascota · ${mascotaType}`}
+              </div>
+              <div className="text-[11px] text-[#0D0D0D]/40">Sin permanencia · Cancela cuando quieras</div>
+            </div>
+            <div className="text-[20px] font-bold text-[#1D9E75]">
+              €{payPrice.toFixed(2)}<span className="text-[12px] font-medium">/mes</span>
+            </div>
+          </div>
+
+          {/* Registration fields if not logged in */}
+          {!isLoggedIn && (
+            <div className="mb-4">
+              <div className="text-[11px] font-bold text-[#0D0D0D]/40 uppercase tracking-[0.8px] mb-2">Tus datos</div>
+              <input value={regForm.name} onChange={e => setRegForm(r => ({ ...r, name: e.target.value }))}
+                placeholder="Tu nombre" type="text"
+                className="w-full px-4 py-3 rounded-[11px] text-[14px] text-[#0D0D0D] mb-2"
+                style={{ background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.12)' }} />
+              <input value={regForm.email} onChange={e => setRegForm(r => ({ ...r, email: e.target.value }))}
+                placeholder="tu@email.com" type="email"
+                className="w-full px-4 py-3 rounded-[11px] text-[14px] text-[#0D0D0D]"
+                style={{ background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.12)' }} />
+            </div>
+          )}
+
+          {/* Payment method tabs */}
+          <div className="text-[11px] font-bold text-[#0D0D0D]/40 uppercase tracking-[0.8px] mb-2">Método de pago</div>
+          <div className="flex gap-2 mb-4 p-1 rounded-[13px]" style={{ background: 'rgba(13,13,13,.06)' }}>
+            {([
+              { k: 'card'  as const, l: 'Tarjeta',   i: '💳' },
+              { k: 'bizum' as const, l: 'Bizum',      i: '💙' },
+              { k: 'apple' as const, l: 'Apple Pay',  i: '🍎' },
+            ]).map(pm => (
+              <button key={pm.k} onClick={() => setPayMethod(pm.k)}
+                className="flex-1 py-2 rounded-[10px] text-[11px] font-semibold transition-all duration-200"
+                style={payMethod === pm.k
+                  ? { background: '#0D0D0D', color: 'white' }
+                  : { background: 'transparent', color: 'rgba(13,13,13,.45)' }}>
+                {pm.i} {pm.l}
               </button>
             ))}
           </div>
+
+          <AnimatePresence mode="wait">
+            {payMethod === 'card' && (
+              <motion.div key="card" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+                <input value={payCardNum} onChange={e => setPayCardNum(e.target.value.slice(0, 19))}
+                  type="text" inputMode="numeric" placeholder="1234 5678 9012 3456"
+                  className="w-full px-4 py-3 rounded-[11px] text-[14px] text-[#0D0D0D] mb-3"
+                  style={{ background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.12)' }} />
+                <div className="flex gap-3 mb-4">
+                  <input value={payExpiry} onChange={e => setPayExpiry(e.target.value.slice(0, 5))}
+                    placeholder="MM/AA" className="flex-1 px-4 py-3 rounded-[11px] text-[14px] text-[#0D0D0D]"
+                    style={{ background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.12)' }} />
+                  <input value={payCvc} onChange={e => setPayCvc(e.target.value.slice(0, 3))}
+                    type="text" inputMode="numeric" placeholder="CVC"
+                    className="flex-1 px-4 py-3 rounded-[11px] text-[14px] text-[#0D0D0D]"
+                    style={{ background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.12)' }} />
+                </div>
+              </motion.div>
+            )}
+            {payMethod === 'bizum' && (
+              <motion.div key="bizum" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="mb-4">
+                <input value={payPhone} onChange={e => setPayPhone(e.target.value)}
+                  type="tel" placeholder="+34 600 000 000"
+                  className="w-full px-4 py-3 rounded-[11px] text-[14px] text-[#0D0D0D] mb-2"
+                  style={{ background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.12)' }} />
+                <p className="text-[11px] text-[#0D0D0D]/35">Recibirás una solicitud en tu app de banco.</p>
+              </motion.div>
+            )}
+            {payMethod === 'apple' && (
+              <motion.div key="apple" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="mb-4">
+                <div className="rounded-[13px] p-4 flex items-center gap-3 border border-[#0D0D0D]/10"
+                  style={{ background: 'rgba(13,13,13,.04)' }}>
+                  <span className="text-[28px]">🍎</span>
+                  <div>
+                    <div className="text-[13px] font-semibold text-[#0D0D0D]">Apple Pay</div>
+                    <div className="text-[11px] text-[#0D0D0D]/40">Confirma con Face ID o Touch ID</div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <motion.button whileTap={tapScale} onClick={handlePayment}
+            disabled={(!isLoggedIn && (!regForm.name || !regForm.email)) || regLoading}
+            className="w-full py-4 rounded-[13px] text-[15px] font-semibold text-white mb-2 disabled:opacity-40"
+            style={{ background: '#1D9E75' }}>
+            {regLoading ? 'Registrando…' : `Pagar €${payPrice.toFixed(2)}/mes →`}
+          </motion.button>
+          <p className="text-center text-[12px] text-[#0D0D0D]/35 pb-2">🔒 Pago seguro · Cancela cuando quieras</p>
         </div>
       </Sheet>
 
@@ -735,7 +860,7 @@ export default function HomePage() {
       {showOnboarding && (
         <div className="fixed inset-0 z-[100] flex justify-center items-stretch">
           <div className="w-full h-full" style={{ maxWidth: 430 }}>
-            <Onboarding inline onComplete={handleOnboardingComplete} />
+            <Onboarding inline product={onboardingProduct} onComplete={handleOnboardingComplete} />
           </div>
         </div>
       )}

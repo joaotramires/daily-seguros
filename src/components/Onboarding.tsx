@@ -3,13 +3,37 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { tapScale } from '@/lib/animations'
 
-interface Props { onComplete: () => void; inline?: boolean }
+interface Props {
+  product: 'home' | 'pet'
+  onComplete: () => void
+  inline?: boolean
+}
 
-type Step = 1 | 2 | 3
-type PayMethod = 'card' | 'bizum' | 'apple'
+type Step = 1 | 2
 
 const LIVING = ['Estudio', 'Piso compartido', 'Piso en propiedad', 'Casa'] as const
 const STUFF  = ['Menos de €5.000', '€5.000 – €15.000', 'Más de €15.000'] as const
+
+const PET_OPS = [
+  { label: 'Perro pequeño', emoji: '🐶', price: 33.6 },
+  { label: 'Perro mediano', emoji: '🐕', price: 40.8 },
+  { label: 'Perro grande',  emoji: '🦮', price: 50.4 },
+  { label: 'Gato',          emoji: '🐱', price: 26.4 },
+] as const
+
+const HOME_FEATURES = [
+  'Daños eléctricos incluidos de serie',
+  'Indemnización en efectivo — tú eliges al reparador',
+  'Cancela cuando quieras, sin llamadas ni papeleo',
+]
+
+const PET_FEATURES = [
+  'Consultas veterinarias y urgencias',
+  'Cirugía y hospitalización',
+  'Diagnósticos (radiografías, analíticas, ecografías)',
+  'Vacunas anuales incluidas',
+  'Responsabilidad civil frente a terceros',
+]
 
 function calcHogar(living: string, stuff: string): number {
   let base = 9.0
@@ -21,82 +45,100 @@ function calcHogar(living: string, stuff: string): number {
   return Math.round(base * 1.2 * 10) / 10
 }
 
-export default function Onboarding({ onComplete, inline }: Props) {
-  const [step, setStep]             = useState<Step>(1)
-  const [living, setLiving]         = useState('')
-  const [stuff, setStuff]           = useState('')
-  const [payMethod, setPayMethod]   = useState<PayMethod>('card')
-  const [cardNum, setCardNum]       = useState('')
-  const [cardExpiry, setCardExpiry] = useState('')
-  const [cardCvc, setCardCvc]       = useState('')
-  const [bizumPhone, setBizumPhone] = useState('')
+function getComp(price: number): string {
+  if (price < 15) return 'un café al día ☕'
+  if (price < 25) return '2 copas en Malasaña 🍷'
+  if (price < 35) return 'el gym que no usas 💪'
+  if (price < 45) return 'una cena para dos 🍝'
+  return 'Spotify + Netflix juntos 🎬'
+}
 
-  const hogarPrice = living && stuff ? calcHogar(living, stuff) : 0
+export default function Onboarding({ product, onComplete, inline }: Props) {
+  const [step, setStep]         = useState<Step>(1)
+  const [living, setLiving]     = useState('')
+  const [stuff, setStuff]       = useState('')
+  const [petLabel, setPetLabel] = useState('')
+  const [petPrice, setPetPrice] = useState(0)
 
-  const compText = hogarPrice < 15 ? 'un café al día ☕'
-    : hogarPrice < 25 ? '2 copas en Malasaña 🍷'
-    : hogarPrice < 35 ? 'el gym que no usas 💪'
-    : hogarPrice < 45 ? 'una cena para dos 🍝'
-    : 'Spotify + Netflix juntos 🎬'
+  const hogarPrice  = product === 'home' && living && stuff ? calcHogar(living, stuff) : 0
+  const price       = product === 'home' ? hogarPrice : petPrice
+  const compText    = getComp(price)
+  const canProceed  = product === 'home' ? !!(living && stuff) : !!petLabel
 
-  function handlePay() {
-    localStorage.setItem('daily_onboarding_complete', 'true')
-    localStorage.setItem('daily_hogar_price', String(hogarPrice))
-    const pmLabel = payMethod === 'card' ? 'Tarjeta' : payMethod === 'bizum' ? 'Bizum' : 'Apple Pay'
-    const msg = encodeURIComponent(
-      `¡Hola! Acabo de activar mi Seguro Hogar Daily.\n` +
-      `• Vivienda: ${living}\n` +
-      `• Bienes: ${stuff}\n` +
-      `• Cuota: €${hogarPrice.toFixed(2)}/mes\n` +
-      `• Pago: ${pmLabel}\n` +
-      `¡Gracias! 🏠`
-    )
-    window.open(`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER}?text=${msg}`, '_blank')
+  function handleComplete() {
+    if (product === 'home') {
+      localStorage.setItem('daily_onboarding_complete', 'true')
+      localStorage.setItem('daily_hogar_price', String(hogarPrice))
+    } else {
+      localStorage.setItem('daily_mascota_price', String(petPrice))
+      localStorage.setItem('daily_mascota_type', petLabel)
+    }
     onComplete()
   }
 
   const sel      = 'text-white font-semibold'
   const unsel    = 'text-[#0D0D0D] font-medium'
-  const btnBase  = 'px-4 py-2.5 rounded-[11px] text-[13px] border transition-all duration-200'
-  const btnSel   = `${btnBase} border-transparent`
-  const btnUnsel = `${btnBase} border-[#0D0D0D]/10 bg-[rgba(13,13,13,.04)]`
-
-  const inputCls = 'w-full px-4 py-3 rounded-[11px] text-[14px] text-[#0D0D0D]'
-  const inputSty = { background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.12)' }
-  const labelCls = 'block text-[11px] font-bold text-[#0D0D0D]/40 uppercase tracking-[0.8px] mb-1.5'
+  const chip     = 'px-4 py-2.5 rounded-[11px] text-[13px] border transition-all duration-200'
+  const chipSel  = `${chip} border-transparent`
+  const chipUn   = `${chip} border-[#0D0D0D]/10 bg-[rgba(13,13,13,.04)]`
+  const lbl      = 'text-[11px] font-bold text-[#0D0D0D]/40 uppercase tracking-[0.8px] mb-2 block'
 
   const steps = (
     <AnimatePresence mode="wait">
       {step === 1 && (
         <motion.div key="s1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.25, ease: 'easeOut' }}>
-          <div className="text-[10px] font-bold text-[#0D0D0D]/35 uppercase tracking-[1px] mb-1">Paso 1 de 3</div>
-          <h2 className="text-[22px] font-bold text-[#0D0D0D] mb-1 tracking-tight">Cuéntanos sobre tu hogar</h2>
-          <p className="text-[13px] text-[#0D0D0D]/40 mb-5">Solo aseguramos tus cosas, no las paredes — eso es del propietario.</p>
+          <div className="text-[10px] font-bold text-[#0D0D0D]/35 uppercase tracking-[1px] mb-1">Paso 1 de 2</div>
 
-          <div className={labelCls}>¿Dónde vives?</div>
-          <div className="flex flex-wrap gap-2 mb-5">
-            {LIVING.map(o => (
-              <button key={o} onClick={() => setLiving(o)}
-                className={living === o ? `${btnSel} ${sel}` : `${btnUnsel} ${unsel}`}
-                style={living === o ? { background: '#1D9E75' } : {}}>
-                {o}
-              </button>
-            ))}
-          </div>
+          {product === 'home' ? (
+            <>
+              <h2 className="text-[22px] font-bold text-[#0D0D0D] mb-1 tracking-tight">Cuéntanos sobre tu hogar</h2>
+              <p className="text-[13px] text-[#0D0D0D]/40 mb-5">Solo aseguramos tus cosas, no las paredes — eso es del propietario.</p>
+              <span className={lbl}>¿Dónde vives?</span>
+              <div className="flex flex-wrap gap-2 mb-5">
+                {LIVING.map(o => (
+                  <button key={o} onClick={() => setLiving(o)}
+                    className={living === o ? `${chipSel} ${sel}` : `${chipUn} ${unsel}`}
+                    style={living === o ? { background: '#1D9E75' } : {}}>
+                    {o}
+                  </button>
+                ))}
+              </div>
+              <span className={lbl}>¿Cuánto valen tus cosas?</span>
+              <div className="flex flex-wrap gap-2 mb-6">
+                {STUFF.map(o => (
+                  <button key={o} onClick={() => setStuff(o)}
+                    className={stuff === o ? `${chipSel} ${sel}` : `${chipUn} ${unsel}`}
+                    style={stuff === o ? { background: '#1D9E75' } : {}}>
+                    {o}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <h2 className="text-[22px] font-bold text-[#0D0D0D] mb-1 tracking-tight">¿Qué mascota tienes?</h2>
+              <p className="text-[13px] text-[#0D0D0D]/40 mb-5">Cobertura completa desde el primer día, sin carencias.</p>
+              <div className="flex flex-col gap-2 mb-6">
+                {PET_OPS.map(o => (
+                  <button key={o.label}
+                    onClick={() => { setPetLabel(o.label); setPetPrice(o.price) }}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-[13px] border text-left transition-all duration-200 ${petLabel === o.label ? sel : unsel}`}
+                    style={petLabel === o.label
+                      ? { background: '#1D9E75', borderColor: '#1D9E75' }
+                      : { background: 'rgba(13,13,13,.04)', borderColor: 'rgba(13,13,13,.1)' }}>
+                    <span className="text-[20px]">{o.emoji}</span>
+                    <div className="flex-1 text-[14px] font-semibold">{o.label}</div>
+                    <span className={`text-[13px] font-bold ${petLabel === o.label ? 'text-white/80' : 'text-[#0D0D0D]/35'}`}>
+                      €{o.price.toFixed(2)}/mes
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
 
-          <div className={labelCls}>¿Cuánto valen tus cosas?</div>
-          <div className="flex flex-wrap gap-2 mb-6">
-            {STUFF.map(o => (
-              <button key={o} onClick={() => setStuff(o)}
-                className={stuff === o ? `${btnSel} ${sel}` : `${btnUnsel} ${unsel}`}
-                style={stuff === o ? { background: '#1D9E75' } : {}}>
-                {o}
-              </button>
-            ))}
-          </div>
-
-          {living && stuff && (
+          {canProceed && (
             <motion.button initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
               whileTap={tapScale} onClick={() => setStep(2)}
               className="w-full py-4 rounded-[13px] text-[15px] font-semibold text-white"
@@ -110,17 +152,19 @@ export default function Onboarding({ onComplete, inline }: Props) {
       {step === 2 && (
         <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.25, ease: 'easeOut' }}>
-          <div className="text-[10px] font-bold text-[#0D0D0D]/35 uppercase tracking-[1px] mb-1">Paso 2 de 3</div>
+          <div className="text-[10px] font-bold text-[#0D0D0D]/35 uppercase tracking-[1px] mb-1">Paso 2 de 2</div>
           <h2 className="text-[22px] font-bold text-[#0D0D0D] mb-5 tracking-tight">Tu cobertura personalizada</h2>
 
           <div className="rounded-[16px] p-4 mb-3 border border-[#0D0D0D]/[0.07]" style={{ background: 'var(--sand-card)' }}>
             <div className="flex items-center justify-between py-2">
               <div className="flex items-center gap-2.5">
-                <span className="text-[20px]">🏠</span>
-                <span className="text-[14px] font-semibold text-[#0D0D0D]">Hogar</span>
+                <span className="text-[20px]">{product === 'home' ? '🏠' : '🐾'}</span>
+                <span className="text-[14px] font-semibold text-[#0D0D0D]">
+                  {product === 'home' ? 'Hogar' : petLabel}
+                </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[13px] font-bold text-[#1D9E75]">€{hogarPrice.toFixed(2)}/mes</span>
+                <span className="text-[13px] font-bold text-[#1D9E75]">€{price.toFixed(2)}/mes</span>
                 <span className="text-[#1D9E75] text-[16px]">✓</span>
               </div>
             </div>
@@ -133,19 +177,15 @@ export default function Onboarding({ onComplete, inline }: Props) {
           </div>
 
           <div className="flex flex-col gap-1.5 mb-5">
-            {[
-              'Daños eléctricos incluidos de serie',
-              'Indemnización en efectivo — tú eliges al reparador',
-              'Cancela cuando quieras, sin llamadas ni papeleo',
-            ].map(item => (
-              <div key={item} className="flex items-center gap-2">
-                <span className="text-[11px] font-bold text-[#1D9E75]">✓</span>
-                <span className="text-[12px] text-[#0D0D0D]/55">{item}</span>
+            {(product === 'home' ? HOME_FEATURES : PET_FEATURES).map(item => (
+              <div key={item} className="flex items-start gap-2">
+                <span className="text-[11px] font-bold text-[#1D9E75] mt-[2px]">✓</span>
+                <span className="text-[12px] text-[#0D0D0D]/55 leading-snug">{item}</span>
               </div>
             ))}
           </div>
 
-          <motion.button whileTap={tapScale} onClick={() => setStep(3)}
+          <motion.button whileTap={tapScale} onClick={handleComplete}
             className="w-full py-4 rounded-[13px] text-[15px] font-semibold text-white mb-3"
             style={{ background: '#1D9E75' }}>
             Continuar al pago →
@@ -153,94 +193,6 @@ export default function Onboarding({ onComplete, inline }: Props) {
           <p className="text-center text-[12px] text-[#0D0D0D]/35">Cancela cuando quieras. Sin permanencia.</p>
 
           <button onClick={() => setStep(1)} className="w-full text-center text-[12px] text-[#0D0D0D]/35 py-2 mt-1">
-            ← Volver
-          </button>
-        </motion.div>
-      )}
-
-      {step === 3 && (
-        <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.25, ease: 'easeOut' }}>
-          <div className="text-[10px] font-bold text-[#0D0D0D]/35 uppercase tracking-[1px] mb-1">Paso 3 de 3</div>
-          <h2 className="text-[22px] font-bold text-[#0D0D0D] mb-1 tracking-tight">Confirma el pago</h2>
-          <p className="text-[13px] text-[#0D0D0D]/40 mb-5">€{hogarPrice.toFixed(2)}/mes · Sin permanencia</p>
-
-          {/* Payment method tabs */}
-          <div className="flex gap-2 mb-5 p-1 rounded-[13px]" style={{ background: 'rgba(13,13,13,.06)' }}>
-            {([
-              { k: 'card',  l: 'Tarjeta',   i: '💳' },
-              { k: 'bizum', l: 'Bizum',      i: '💙' },
-              { k: 'apple', l: 'Apple Pay',  i: '🍎' },
-            ] as { k: PayMethod; l: string; i: string }[]).map(pm => (
-              <button key={pm.k} onClick={() => setPayMethod(pm.k)}
-                className="flex-1 py-2 rounded-[10px] text-[11px] font-semibold transition-all duration-200"
-                style={payMethod === pm.k
-                  ? { background: '#0D0D0D', color: 'white' }
-                  : { background: 'transparent', color: 'rgba(13,13,13,.45)' }}>
-                {pm.i} {pm.l}
-              </button>
-            ))}
-          </div>
-
-          <AnimatePresence mode="wait">
-            {payMethod === 'card' && (
-              <motion.div key="card" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}>
-                <label className={labelCls}>Número de tarjeta</label>
-                <input type="text" inputMode="numeric" placeholder="1234 5678 9012 3456"
-                  value={cardNum} onChange={e => setCardNum(e.target.value.slice(0, 19))}
-                  className={`${inputCls} mb-4`} style={inputSty} />
-                <div className="flex gap-3 mb-6">
-                  <div className="flex-1">
-                    <label className={labelCls}>Caducidad</label>
-                    <input type="text" placeholder="MM/AA"
-                      value={cardExpiry} onChange={e => setCardExpiry(e.target.value.slice(0, 5))}
-                      className={inputCls} style={inputSty} />
-                  </div>
-                  <div className="flex-1">
-                    <label className={labelCls}>CVC</label>
-                    <input type="text" inputMode="numeric" placeholder="123"
-                      value={cardCvc} onChange={e => setCardCvc(e.target.value.slice(0, 3))}
-                      className={inputCls} style={inputSty} />
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {payMethod === 'bizum' && (
-              <motion.div key="bizum" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }} className="mb-6">
-                <label className={labelCls}>Número de móvil</label>
-                <input type="tel" placeholder="+34 600 000 000"
-                  value={bizumPhone} onChange={e => setBizumPhone(e.target.value)}
-                  className={inputCls} style={inputSty} />
-                <p className="text-[11px] text-[#0D0D0D]/35 mt-2">Recibirás una solicitud de pago en tu app de banco.</p>
-              </motion.div>
-            )}
-
-            {payMethod === 'apple' && (
-              <motion.div key="apple" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }} className="mb-6">
-                <div className="rounded-[13px] p-4 flex items-center gap-3 border border-[#0D0D0D]/10"
-                  style={{ background: 'rgba(13,13,13,.04)' }}>
-                  <span className="text-[28px]">🍎</span>
-                  <div>
-                    <div className="text-[13px] font-semibold text-[#0D0D0D]">Apple Pay</div>
-                    <div className="text-[11px] text-[#0D0D0D]/40">Confirma con Face ID o Touch ID</div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <motion.button whileTap={tapScale} onClick={handlePay}
-            className="w-full py-4 rounded-[13px] text-[15px] font-semibold text-white mb-3"
-            style={{ background: '#1D9E75' }}>
-            Pagar €{hogarPrice.toFixed(2)}/mes →
-          </motion.button>
-          <p className="text-center text-[12px] text-[#0D0D0D]/35">🔒 Pago seguro · Cancela cuando quieras</p>
-
-          <button onClick={() => setStep(2)} className="w-full text-center text-[12px] text-[#0D0D0D]/35 py-2 mt-1">
             ← Volver
           </button>
         </motion.div>
@@ -257,7 +209,7 @@ export default function Onboarding({ onComplete, inline }: Props) {
 
   const progressBar = (
     <div className="flex gap-1.5">
-      {([1, 2, 3] as Step[]).map(i => (
+      {([1, 2] as Step[]).map(i => (
         <div key={i} className="h-[3px] flex-1 rounded-full transition-all duration-300"
           style={{ background: i <= step ? '#1D9E75' : 'rgba(255,255,255,.15)' }} />
       ))}
