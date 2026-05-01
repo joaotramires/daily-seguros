@@ -9,6 +9,7 @@ const FAQS = [
   { q: '¿Quién paga mis siniestros?',  a: 'Mapfre. Nosotros gestionamos todo el proceso y hacemos seguimiento.' },
   { q: '¿Sois una aseguradora?',       a: 'No. Somos un corredor digital. Mapfre asegura, nosotros gestionamos todo lo demás.' },
   { q: '¿Puedo tener varios seguros?', a: 'Sí, y te premiamos. Con 2 seguros tienes un 3% extra, con 3 un 7%, con los 4 un 12%.' },
+  { q: '¿Cómo funciona el pago mensual si los contratos son anuales?', a: 'Buena pregunta. En nuestro acuerdo de correduría con Mapfre está recogido explícitamente que, cuando Daily notifique la cancelación de una póliza, Mapfre procederá al extorno de la prima no consumida calculada pro rata — devolviendo la parte proporcional de los días no cubiertos. En la práctica: cancelas hoy, Mapfre te devuelve lo que no has usado. Sin letra pequeña.' },
 ]
 
 const PM_ICONS: Record<string, string> = { bizum: '💙', card: '💳', apple: '🍎' }
