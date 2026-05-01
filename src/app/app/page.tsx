@@ -345,23 +345,19 @@ export default function HomePage() {
         {/* Unified discount card */}
         <motion.div variants={fadeUp} className="rounded-[18px] p-4 mb-3"
           style={{
-            background: totalDisc > 0
-              ? 'linear-gradient(135deg,rgba(29,158,117,.08),rgba(37,196,138,.03))'
-              : 'var(--sand-card)',
+            background: totalDisc > 0 ? 'linear-gradient(135deg,rgba(29,158,117,.08),rgba(37,196,138,.03))' : 'var(--sand-card)',
             border: totalDisc > 0 ? '1px solid rgba(29,158,117,.2)' : '1px solid rgba(13,13,13,.07)',
           }}>
 
-          {/* Header */}
-          <div className="flex items-start justify-between mb-4">
+          <div className="flex items-start justify-between mb-3">
             <div>
-              <div className="text-[10px] font-bold uppercase tracking-[1px] mb-0.5"
+              <div className="text-[10px] font-bold uppercase tracking-[1px] mb-1"
                 style={{ color: totalDisc > 0 ? '#1D9E75' : 'rgba(13,13,13,.35)' }}>
                 Tu descuento acumulado
               </div>
-              <div className="text-[28px] font-bold text-[#0D0D0D] tracking-tight leading-none">
-                {totalDisc > 0 ? `−${totalDisc}%` : 'Sin descuento aún'}
+              <div className="text-[32px] font-bold text-[#0D0D0D] tracking-tight leading-none">
+                −{totalDisc}%
               </div>
-              <div className="text-[11px] text-[#0D0D0D]/35 mt-1">Para siempre, mientras sigas</div>
             </div>
             {gross > 0 && totalDisc > 0 && (
               <div className="rounded-[10px] px-3 py-2 text-center" style={{ background: 'rgba(29,158,117,.12)' }}>
@@ -371,64 +367,41 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* Multi-seguro row */}
-          <div className="rounded-[12px] p-3 mb-2" style={{ background: 'rgba(13,13,13,.04)', border: '1px solid rgba(13,13,13,.06)' }}>
-            <div className="flex items-center justify-between mb-2.5">
-              <span className="text-[12px] font-semibold text-[#0D0D0D]">Multi-seguro</span>
-              <span className="text-[13px] font-bold" style={{ color: bundleDisc > 0 ? '#1D9E75' : 'rgba(13,13,13,.25)' }}>
+          {/* Two accrual pills */}
+          <div className="flex gap-2 mb-3">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+              style={bundleDisc > 0
+                ? { background: 'rgba(29,158,117,.12)', border: '1px solid rgba(29,158,117,.2)' }
+                : { background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.08)' }}>
+              <span className="text-[11px] font-bold" style={{ color: bundleDisc > 0 ? '#1D9E75' : 'rgba(13,13,13,.3)' }}>
                 +{bundleDisc}%
               </span>
+              <span className="text-[11px]" style={{ color: bundleDisc > 0 ? 'rgba(29,158,117,.7)' : 'rgba(13,13,13,.25)' }}>
+                Multi-seguro
+              </span>
             </div>
-            <div className="relative flex items-center justify-between">
-              <div className="absolute top-1/2 -translate-y-1/2" style={{ left: 6, right: 6 }}>
-                <div className="h-[2px] rounded-full overflow-hidden" style={{ background: 'rgba(13,13,13,.08)' }}>
-                  <motion.div className="h-full rounded-full" style={{ background: '#1D9E75' }}
-                    initial={{ width: 0 }} animate={{ width: `${barFillPct}%` }}
-                    transition={{ duration: 0.8, ease: 'easeOut' }} />
-                </div>
-              </div>
-              {TIERS_UI.map((tier, i) => {
-                const reached = activeCount > 0 && i <= tierIdx
-                return (
-                  <div key={i} className="relative z-10 w-3 h-3 rounded-full flex-shrink-0"
-                    style={{
-                      background: reached ? '#1D9E75' : 'var(--sand-base)',
-                      border: `1.5px solid ${reached ? '#1D9E75' : 'rgba(13,13,13,.15)'}`,
-                    }} />
-                )
-              })}
-            </div>
-            <div className="flex justify-between mt-1.5">
-              {TIERS_UI.map((tier, i) => (
-                <div key={i} className="text-[9px] font-bold w-3 text-center"
-                  style={{ color: activeCount > 0 && i <= tierIdx ? '#1D9E75' : 'rgba(13,13,13,.2)' }}>
-                  {tier.label}
-                </div>
-              ))}
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+              style={loyaltyDisc > 0
+                ? { background: 'rgba(29,158,117,.12)', border: '1px solid rgba(29,158,117,.2)' }
+                : { background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.08)' }}>
+              <span className="text-[11px] font-bold" style={{ color: loyaltyDisc > 0 ? '#1D9E75' : 'rgba(13,13,13,.3)' }}>
+                +{loyaltyDisc}%
+              </span>
+              <span className="text-[11px]" style={{ color: loyaltyDisc > 0 ? 'rgba(29,158,117,.7)' : 'rgba(13,13,13,.25)' }}>
+                Fidelidad
+              </span>
             </div>
           </div>
 
-          {/* Fidelidad row */}
-          <div className="rounded-[12px] p-3" style={{ background: 'rgba(13,13,13,.04)', border: '1px solid rgba(13,13,13,.06)' }}>
-            <div className="flex items-center justify-between mb-2.5">
-              <span className="text-[12px] font-semibold text-[#0D0D0D]">Fidelidad · Mes {loyaltyMonths}</span>
-              <span className="text-[13px] font-bold" style={{ color: loyaltyDisc > 0 ? '#1D9E75' : 'rgba(13,13,13,.25)' }}>
-                +{loyaltyDisc}%
-              </span>
-            </div>
-            <div className="h-[4px] rounded-full overflow-hidden mb-1.5" style={{ background: 'rgba(13,13,13,.08)' }}>
-              <motion.div className="h-full rounded-full" style={{ background: '#1D9E75' }}
-                initial={{ width: 0 }} animate={{ width: `${streakPct}%` }}
-                transition={{ duration: 0.8, ease: 'easeOut' }} />
-            </div>
-            {nextTier ? (
-              <div className="flex justify-between text-[10px]" style={{ color: 'rgba(13,13,13,.3)' }}>
-                <span>{nextTier.months - loyaltyMonths} meses para el siguiente nivel</span>
-                <span className="font-bold" style={{ color: '#1D9E75' }}>+{nextTier.disc}%</span>
-              </div>
-            ) : (
-              <div className="text-[10px] font-semibold" style={{ color: '#1D9E75' }}>Descuento máximo de fidelidad</div>
-            )}
+          {/* Next step hint */}
+          <div className="text-[11px]" style={{ color: 'rgba(13,13,13,.35)' }}>
+            {activeCount === 0
+              ? 'Activa 2 seguros → +3% multi-seguro · Mes 4 → +5% fidelidad'
+              : activeCount === 1
+              ? 'Añade 1 seguro más → +3% multi-seguro'
+              : nextTier
+              ? `Mes ${nextTier.months} → +${nextTier.disc}% fidelidad`
+              : '¡Descuento máximo conseguido!'}
           </div>
         </motion.div>
 
