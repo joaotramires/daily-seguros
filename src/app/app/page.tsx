@@ -345,8 +345,9 @@ export default function HomePage() {
         {/* Unified discount card */}
         <motion.div variants={fadeUp} className="rounded-[18px] p-4 mb-3"
           style={{
-            background: totalDisc > 0 ? 'linear-gradient(135deg,rgba(29,158,117,.08),rgba(37,196,138,.03))' : 'var(--sand-card)',
-            border: totalDisc > 0 ? '1px solid rgba(29,158,117,.2)' : '1px solid rgba(13,13,13,.07)',
+            background: 'var(--sand-card)',
+            border: totalDisc > 0 ? '1px solid rgba(29,158,117,.25)' : '1px solid rgba(13,13,13,.07)',
+            boxShadow: totalDisc > 0 ? 'inset 0 0 0 9999px rgba(29,158,117,.05)' : 'none',
           }}>
 
           <div className="flex items-start justify-between mb-3">
@@ -356,7 +357,7 @@ export default function HomePage() {
                 Tu descuento acumulado
               </div>
               <div className="text-[32px] font-bold text-[#0D0D0D] tracking-tight leading-none">
-                −{totalDisc}%
+                +{totalDisc}%
               </div>
             </div>
             {gross > 0 && totalDisc > 0 && (
