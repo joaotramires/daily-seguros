@@ -287,20 +287,11 @@ export default function HomePage() {
         <motion.div variants={fadeUp} className="rounded-[20px] overflow-hidden mb-3">
           <div className="p-5" style={{ background: '#0D0D0D' }}>
 
-            {/* Urgency bar */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="text-[10px] font-bold uppercase tracking-[1.5px]" style={{ color: 'rgba(255,255,255,.3)' }}>
-                Daily Club · Early Access
-              </div>
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-                style={{ background: 'rgba(229,9,20,.15)', border: '1px solid rgba(229,9,20,.25)' }}>
-                <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#E50914' }} />
-                <span className="text-[10px] font-bold" style={{ color: '#E50914' }}>847 plazas</span>
-              </div>
-            </div>
-
             <div className="flex items-start gap-3 mb-4">
               <div className="flex-1">
+                <div className="text-[10px] font-bold uppercase tracking-[1.5px] mb-2" style={{ color: 'rgba(255,255,255,.3)' }}>
+                  Daily Club · Recompensas
+                </div>
                 <div className="text-[26px] font-bold text-white leading-tight tracking-tight">
                   Netflix gratis.{' '}
                   <span style={{ color: '#E50914' }}>3 meses.</span>
@@ -313,12 +304,9 @@ export default function HomePage() {
                   </span>
                 </div>
               </div>
-              <div className="w-11 h-11 rounded-[10px] flex items-center justify-center flex-shrink-0"
-                style={{ background: '#E50914' }}>
-                <svg width="22" height="38" viewBox="0 0 111 190" fill="white">
-                  <path d="M0 0v190h40V78.7L71 190h40V0H71v111.3L40 0H0z"/>
-                </svg>
-              </div>
+              <svg width="38" height="66" viewBox="0 0 111 190" fill="#E50914" className="flex-shrink-0 mt-1">
+                <path d="M0 0v190h40V78.7L71 190h40V0H71v111.3L40 0H0z"/>
+              </svg>
             </div>
 
             <div className="flex items-center gap-2 mb-3">
