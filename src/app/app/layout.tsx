@@ -5,11 +5,41 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Sheet from '@/components/ui/Sheet'
 import { tapScale } from '@/lib/animations'
 
-const NAV = [
-  { path: '/app',           icon: '◉', label: 'Seguros'    },
-  { path: '/app/claims',    icon: '◷', label: 'Siniestros' },
-  { path: '/app/ventajas',  icon: '🏆', label: 'Club'      },
-  { path: '/app/account',   icon: '◎', label: 'Ayuda'      },
+const NAV: { path: string; label: string; icon: React.ReactNode }[] = [
+  {
+    path: '/app', label: 'Seguros',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M11 2.5L4.5 5.5V11c0 3.8 2.8 7.3 6.5 8.5 3.7-1.2 6.5-4.7 6.5-8.5V5.5L11 2.5z"/>
+      </svg>
+    ),
+  },
+  {
+    path: '/app/claims', label: 'Siniestros',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="11" cy="11" r="8.5"/>
+        <path d="M11 7v4.5l3 1.5"/>
+      </svg>
+    ),
+  },
+  {
+    path: '/app/ventajas', label: 'Club',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M11 2.5l2.5 5.2 5.7.8-4.1 4 1 5.7L11 15.4l-5.1 2.8 1-5.7-4.1-4 5.7-.8L11 2.5z"/>
+      </svg>
+    ),
+  },
+  {
+    path: '/app/account', label: 'Ayuda',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="11" cy="8" r="3.5"/>
+        <path d="M3.5 19.5c0-4.1 3.4-7.5 7.5-7.5s7.5 3.4 7.5 7.5"/>
+      </svg>
+    ),
+  },
 ]
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -120,7 +150,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <motion.button key={item.path} whileTap={{ scale: 0.9 }}
               onClick={() => router.push(item.path)}
               className="flex flex-col items-center gap-1 px-3 py-1">
-              <span className={`text-[20px] transition-colors ${active ? 'text-[#0D0D0D]' : 'text-[#0D0D0D]/20'}`}>
+              <span className={`transition-colors ${active ? 'text-[#0D0D0D]' : 'text-[#0D0D0D]/20'}`}>
                 {item.icon}
               </span>
               <span className={`text-[10px] font-medium transition-colors ${active ? 'text-[#0D0D0D] font-bold' : 'text-[#0D0D0D]/20'}`}>

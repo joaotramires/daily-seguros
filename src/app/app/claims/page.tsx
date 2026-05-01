@@ -33,6 +33,7 @@ export default function ClaimsPage() {
   const [selectedPolicy, setSelectedPolicy] = useState('')
   const [editId, setEditId] = useState<string | null>(null)
   const [editDesc, setEditDesc] = useState('')
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null)
   const [mediaFiles, setMediaFiles] = useState<File[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -73,10 +74,10 @@ export default function ClaimsPage() {
 
   async function submitClaim() {
     if (!newDesc.trim()) return
-    const newId = 'DLY-' + Math.floor(1000 + Math.random() * 9000)
-    const newClaim = { id: newId, desc: newDesc.slice(0, 50), day: 1, isNew: true }
+    const tempId = 'DLY-' + Math.floor(1000 + Math.random() * 9000)
+    const newClaim = { id: tempId, desc: newDesc.slice(0, 50), day: 1, isNew: true }
     setClaims(prev => [newClaim, ...prev])
-    setExpandedId(newId)
+    setExpandedId(tempId)
     setShowForm(false)
     const descToSend = newDesc
     const filesToSend = mediaFiles
@@ -89,17 +90,35 @@ export default function ClaimsPage() {
       if (filesToSend.length > 0) {
         try {
           const fd = new FormData()
-          fd.append('claimId', newId)
+          fd.append('claimId', tempId)
           filesToSend.forEach(f => fd.append('files', f))
           const res = await fetch('/api/upload-claim-media', { method: 'POST', body: fd })
           const data = await res.json()
           mediaUrls = data.urls || []
         } catch {}
       }
-      await fetch('/api/create-claim', {
+      const res = await fetch('/api/create-claim', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ customerId, policyId: selectedPolicy || null, description: descToSend, mediaUrls }),
+      })
+      const data = await res.json()
+      if (data.claimId) {
+        setClaims(prev => prev.map(c => c.id === tempId ? { ...c, id: data.claimId } : c))
+        setExpandedId(data.claimId)
+      }
+    }
+  }
+
+  async function deleteClaim(claimId: string, isDemo: boolean) {
+    setClaims(prev => prev.filter(c => c.id !== claimId))
+    if (expandedId === claimId) setExpandedId(null)
+    setPendingDelete(null)
+    if (!isDemo) {
+      await fetch('/api/delete-claim', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ claimId }),
       })
     }
   }
@@ -157,6 +176,17 @@ export default function ClaimsPage() {
                   <div className="flex items-center gap-2">
                     <button onClick={e => { e.stopPropagation(); setEditId(claim.id); setEditDesc(claim.desc) }}
                       className="text-[12px] font-semibold text-[#1D9E75]">Editar</button>
+                    {pendingDelete === claim.id ? (
+                      <>
+                        <button onClick={e => { e.stopPropagation(); deleteClaim(claim.id, claim.isDemo) }}
+                          className="text-[12px] font-semibold" style={{ color: '#D85A30' }}>Sí</button>
+                        <button onClick={e => { e.stopPropagation(); setPendingDelete(null) }}
+                          className="text-[12px] font-semibold text-[#0D0D0D]/35">No</button>
+                      </>
+                    ) : (
+                      <button onClick={e => { e.stopPropagation(); setPendingDelete(claim.id) }}
+                        className="text-[12px] font-semibold text-[#0D0D0D]/30">Eliminar</button>
+                    )}
                     <span className="rounded-[8px] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.5px]"
                       style={claim.isNew
                         ? { background: 'rgba(29,100,220,.1)', color: '#1446A0' }

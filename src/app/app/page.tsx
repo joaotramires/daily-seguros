@@ -286,23 +286,42 @@ export default function HomePage() {
         {/* Referral box */}
         <motion.div variants={fadeUp} className="rounded-[20px] overflow-hidden mb-3">
           <div className="p-5" style={{ background: '#0D0D0D' }}>
+
+            {/* Urgency bar */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-[10px] font-bold uppercase tracking-[1.5px]" style={{ color: 'rgba(255,255,255,.3)' }}>
+                Daily Club · Early Access
+              </div>
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+                style={{ background: 'rgba(229,9,20,.15)', border: '1px solid rgba(229,9,20,.25)' }}>
+                <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#E50914' }} />
+                <span className="text-[10px] font-bold" style={{ color: '#E50914' }}>847 plazas</span>
+              </div>
+            </div>
+
             <div className="flex items-start gap-3 mb-4">
               <div className="flex-1">
-                <div className="text-[10px] font-bold uppercase tracking-[1.5px] mb-2" style={{ color: 'rgba(255,255,255,.3)' }}>
-                  Daily Club · Recompensas
-                </div>
                 <div className="text-[26px] font-bold text-white leading-tight tracking-tight">
                   Netflix gratis.{' '}
-                  <span style={{ color: '#E50914' }}>1 año.</span>
+                  <span style={{ color: '#E50914' }}>3 meses.</span>
                 </div>
-                <div className="text-[12px] mt-1" style={{ color: 'rgba(255,255,255,.4)' }}>
-                  Invita 3 amigos con tu código
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-[12px]" style={{ color: 'rgba(255,255,255,.4)' }}>Trae 1 amigo</span>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                    style={{ background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.55)' }}>
+                    👥 para los dos
+                  </span>
                 </div>
               </div>
-              <div className="w-11 h-11 rounded-[10px] flex items-center justify-center text-[22px] font-black text-white flex-shrink-0"
-                style={{ background: '#E50914', fontFamily: 'Georgia, serif', letterSpacing: '-1px' }}>N</div>
+              <div className="w-11 h-11 rounded-[10px] flex items-center justify-center flex-shrink-0"
+                style={{ background: '#E50914' }}>
+                <svg width="22" height="38" viewBox="0 0 111 190" fill="white">
+                  <path d="M0 0v190h40V78.7L71 190h40V0H71v111.3L40 0H0z"/>
+                </svg>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
+
+            <div className="flex items-center gap-2 mb-3">
               <div className="flex-1 px-3.5 py-2.5 rounded-[10px] font-bold tracking-[3px] text-[14px] text-white"
                 style={{ background: 'rgba(255,255,255,.08)' }}>
                 {(referralCode ?? 'DAILY-DEMO').toUpperCase()}
@@ -313,11 +332,12 @@ export default function HomePage() {
                 {refCopied ? '✓ Copiado' : 'Copiar'}
               </motion.button>
             </div>
-            <div className="flex items-center gap-2 mt-3">
+
+            <div className="flex items-center gap-2">
               <div className="flex-1 h-[2px] rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,.1)' }}>
                 <div className="h-full rounded-full w-0" style={{ background: '#E50914' }} />
               </div>
-              <div className="text-[10px]" style={{ color: 'rgba(255,255,255,.25)' }}>0 / 3 amigos</div>
+              <div className="text-[10px]" style={{ color: 'rgba(255,255,255,.25)' }}>0 / 1 amigo</div>
             </div>
           </div>
         </motion.div>
