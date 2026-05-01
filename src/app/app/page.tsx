@@ -17,6 +17,13 @@ const COMPS = [
   { max: Infinity, text: 'Menos que un Glovo al mes 🛵' },
 ]
 
+const TIERS_UI = [
+  { label: '0%',  discount: 0  },
+  { label: '3%',  discount: 3  },
+  { label: '7%',  discount: 7  },
+  { label: '12%', discount: 12 },
+]
+
 const COVERAGES: Record<string, string[]> = {
   home: [
     'Incendio y daños por agua (tuberías, goteras)',
@@ -151,12 +158,15 @@ export default function HomePage() {
     return () => clearTimeout(compTimer.current)
   }, [net, validComps.length])
 
-  const activeCount = [active.home, active.pet].filter(Boolean).length
+  const activeCount = [active.home, active.pet, travelActive].filter(Boolean).length
   const bundleDisc  = getBundleDiscount(activeCount)
   const loyaltyDisc = getLoyaltyDiscount(loyaltyMonths)
   const totalDisc   = bundleDisc + loyaltyDisc
   const gross       = (active.home ? prices.home : 0) + (active.pet ? prices.pet : 0)
   const netDisplay  = gross * (1 - totalDisc / 100)
+  const tierIdx     = Math.min(activeCount, 4) - 1   // -1 → 3
+  const barFillPct  = tierIdx <= 0 ? 0 : (tierIdx / 3) * 100
+  const monthlySavingsBundle = gross > 0 && bundleDisc > 0 ? gross * bundleDisc / 100 : 0
   const saved       = (gross * totalDisc / 100 * 4).toFixed(2)
   const nextTier    = [{ months: 4, disc: 5 }, { months: 12, disc: 10 }, { months: 24, disc: 15 }].find(t => t.months > loyaltyMonths)
   const streakPct   = nextTier ? Math.round((loyaltyMonths / nextTier.months) * 100) : 100
@@ -324,20 +334,96 @@ export default function HomePage() {
           </div>
         </motion.div>
 
-        {/* Bundle badge */}
-        <AnimatePresence>
-          {activeCount >= 2 && bundleDisc > 0 && (
-            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-              className="rounded-[12px] p-3 mb-3 flex items-center gap-3"
-              style={{ background: 'linear-gradient(135deg,#1D9E75,#0F6E56)' }}>
-              <span className="text-[18px]">🎁</span>
-              <div className="flex-1">
-                <div className="text-[12px] font-semibold text-white">Descuento multi-seguro activo</div>
+        {/* Multi-policy discount card */}
+        <motion.div variants={fadeUp} className="rounded-[18px] p-4 mb-3"
+          style={{
+            background: activeCount >= 4
+              ? 'linear-gradient(135deg,rgba(29,158,117,.1),rgba(37,196,138,.05))'
+              : 'var(--sand-card)',
+            border: bundleDisc > 0
+              ? '1px solid rgba(29,158,117,.2)'
+              : '1px solid rgba(13,13,13,.07)',
+          }}>
+
+          {/* Header */}
+          <div className="flex items-start justify-between mb-3">
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-[1px]"
+                style={{ color: bundleDisc > 0 ? '#1D9E75' : 'rgba(13,13,13,.35)' }}>
+                Descuento multi-seguro
               </div>
-              <div className="text-[20px] font-bold text-white">-{bundleDisc}%</div>
-            </motion.div>
+              <div className="text-[22px] font-bold text-[#0D0D0D] tracking-tight mt-0.5">
+                {activeCount >= 4 ? '🎉 −12%' : bundleDisc > 0 ? `−${bundleDisc}%` : 'Añade más'}
+              </div>
+            </div>
+            {monthlySavingsBundle > 0 && (
+              <div className="rounded-[10px] px-3 py-2 text-center" style={{ background: 'rgba(29,158,117,.12)' }}>
+                <div className="text-[9px] font-bold text-[#1D9E75] uppercase tracking-[0.5px]">Ahorras</div>
+                <div className="text-[14px] font-bold text-[#1D9E75]">€{monthlySavingsBundle.toFixed(2)}/mes</div>
+              </div>
+            )}
+          </div>
+
+          {/* Step progress bar */}
+          <div className="mb-3">
+            <div className="relative flex items-center justify-between">
+              {/* Track */}
+              <div className="absolute top-1/2 -translate-y-1/2" style={{ left: 8, right: 8 }}>
+                <div className="h-[3px] rounded-full overflow-hidden" style={{ background: 'rgba(13,13,13,.08)' }}>
+                  <motion.div className="h-full rounded-full"
+                    style={{ background: 'linear-gradient(90deg,#1D9E75,#25c48a)' }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${barFillPct}%` }}
+                    transition={{ duration: 0.8, ease: 'easeOut' }} />
+                </div>
+              </div>
+              {/* Dots */}
+              {TIERS_UI.map((tier, i) => {
+                const reached   = activeCount > 0 && i <= tierIdx
+                const isCurrent = activeCount > 0 && i === tierIdx
+                return (
+                  <div key={i} className="relative z-10 w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{
+                      background: reached ? '#1D9E75' : 'var(--sand-card)',
+                      border: `2px solid ${reached ? '#1D9E75' : 'rgba(13,13,13,.15)'}`,
+                    }}>
+                    {reached && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                    {isCurrent && (
+                      <motion.div className="absolute inset-[-4px] rounded-full pointer-events-none"
+                        style={{ border: '1.5px solid rgba(29,158,117,.5)' }}
+                        animate={{ scale: [1, 1.5, 1], opacity: [0.6, 0, 0.6] }}
+                        transition={{ duration: 1.5, repeat: Infinity }} />
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+            {/* Tier labels */}
+            <div className="flex justify-between mt-2">
+              {TIERS_UI.map((tier, i) => (
+                <div key={i} className="text-[10px] font-bold w-4 text-center"
+                  style={{ color: activeCount > 0 && i <= tierIdx ? '#1D9E75' : 'rgba(13,13,13,.25)' }}>
+                  {tier.label}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Status text */}
+          {activeCount >= 4 ? (
+            <div className="text-[12px] font-semibold text-[#1D9E75]">¡Máximo descuento conseguido!</div>
+          ) : (
+            <div className="text-[12px]" style={{ color: 'rgba(13,13,13,.4)' }}>
+              {activeCount === 0
+                ? 'Activa 2 seguros → consigue un 3% de descuento'
+                : activeCount === 1
+                ? 'Añade 1 seguro más → ahorra un 3% al mes'
+                : activeCount === 2
+                ? 'Añade un seguro más → sube al 7% de descuento'
+                : 'Añade un seguro más → alcanza el 12% máximo'}
+            </div>
           )}
-        </AnimatePresence>
+        </motion.div>
 
         {/* Insurance cards */}
         {PRODUCTS_DISPLAY.map(product => {

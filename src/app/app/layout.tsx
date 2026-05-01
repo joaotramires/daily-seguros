@@ -22,6 +22,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [phone, setPhone]             = useState('')
   const [step, setStep]               = useState<'email' | 'register' | 'loading'>('email')
   const [authLoading, setAuthLoading] = useState(false)
+  const [mariaOpen, setMariaOpen]     = useState(false)
 
   useEffect(() => {
     const storedName = localStorage.getItem('customerName') || ''
@@ -128,6 +129,67 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </motion.button>
           )
         })}
+      </div>
+
+      {/* María backdrop — closes panel when tapping outside */}
+      <AnimatePresence>
+        {mariaOpen && (
+          <motion.div className="absolute inset-0 z-[29]"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setMariaOpen(false)} />
+        )}
+      </AnimatePresence>
+
+      {/* María floating button — above bottom nav, below sheets (z-30) */}
+      <div className="absolute bottom-[80px] right-4 z-30">
+        <AnimatePresence mode="wait">
+          {mariaOpen ? (
+            <motion.div key="expanded"
+              initial={{ opacity: 0, scale: 0.85, x: 12 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              exit={{ opacity: 0, scale: 0.85, x: 12 }}
+              transition={{ duration: 0.18 }}
+              className="flex items-center gap-3 rounded-[16px] py-3 pl-3 pr-3 shadow-xl"
+              style={{ background: 'var(--sand-modal)', border: '1px solid rgba(13,13,13,.08)', minWidth: 210 }}>
+              <div className="relative flex-shrink-0">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-[18px]"
+                  style={{ background: 'linear-gradient(135deg,#FAC775,#D85A30)' }}>M</div>
+                <div className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
+                  style={{ background: '#25D366', borderColor: 'var(--sand-modal)' }} />
+              </div>
+              <div className="flex-1">
+                <div className="text-[13px] font-bold text-[#0D0D0D]">Habla con María</div>
+                <div className="text-[11px]" style={{ color: 'rgba(13,13,13,.4)' }}>Responde en ~4 min</div>
+              </div>
+              <a href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER}?text=Hola+María`}
+                target="_blank" rel="noopener noreferrer"
+                className="w-9 h-9 rounded-[10px] flex items-center justify-center text-[18px] flex-shrink-0"
+                style={{ background: '#25D366' }}>
+                💬
+              </a>
+            </motion.div>
+          ) : (
+            <motion.button key="collapsed"
+              initial={{ opacity: 0, scale: 0.7 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.7 }}
+              transition={{ duration: 0.18 }}
+              whileTap={{ scale: 0.92 }}
+              onClick={() => setMariaOpen(true)}
+              className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-[20px] shadow-lg relative"
+              style={{ background: 'linear-gradient(135deg,#FAC775,#D85A30)' }}>
+              M
+              {/* Pulsing ring */}
+              <motion.div className="absolute inset-0 rounded-full pointer-events-none"
+                style={{ border: '2px solid #25D366' }}
+                animate={{ scale: [1, 1.45, 1], opacity: [0.7, 0, 0.7] }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }} />
+              {/* Solid green dot */}
+              <div className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2"
+                style={{ background: '#25D366', borderColor: 'var(--sand-base)' }} />
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Auth sheet */}
