@@ -342,95 +342,94 @@ export default function HomePage() {
           </div>
         </motion.div>
 
-        {/* Multi-policy discount card */}
+        {/* Unified discount card */}
         <motion.div variants={fadeUp} className="rounded-[18px] p-4 mb-3"
           style={{
-            background: activeCount >= 4
-              ? 'linear-gradient(135deg,rgba(29,158,117,.1),rgba(37,196,138,.05))'
+            background: totalDisc > 0
+              ? 'linear-gradient(135deg,rgba(29,158,117,.08),rgba(37,196,138,.03))'
               : 'var(--sand-card)',
-            border: bundleDisc > 0
-              ? '1px solid rgba(29,158,117,.2)'
-              : '1px solid rgba(13,13,13,.07)',
+            border: totalDisc > 0 ? '1px solid rgba(29,158,117,.2)' : '1px solid rgba(13,13,13,.07)',
           }}>
 
           {/* Header */}
-          <div className="flex items-start justify-between mb-3">
+          <div className="flex items-start justify-between mb-4">
             <div>
-              <div className="text-[10px] font-bold uppercase tracking-[1px]"
-                style={{ color: bundleDisc > 0 ? '#1D9E75' : 'rgba(13,13,13,.35)' }}>
-                Descuento multi-seguro
+              <div className="text-[10px] font-bold uppercase tracking-[1px] mb-0.5"
+                style={{ color: totalDisc > 0 ? '#1D9E75' : 'rgba(13,13,13,.35)' }}>
+                Tu descuento acumulado
               </div>
-              <div className="text-[22px] font-bold text-[#0D0D0D] tracking-tight mt-0.5">
-                {activeCount >= 4 ? '🎉 −12%' : bundleDisc > 0 ? `−${bundleDisc}%` : 'Añade más'}
+              <div className="text-[28px] font-bold text-[#0D0D0D] tracking-tight leading-none">
+                {totalDisc > 0 ? `−${totalDisc}%` : 'Sin descuento aún'}
               </div>
+              <div className="text-[11px] text-[#0D0D0D]/35 mt-1">Para siempre, mientras sigas</div>
             </div>
-            {monthlySavingsBundle > 0 && (
+            {gross > 0 && totalDisc > 0 && (
               <div className="rounded-[10px] px-3 py-2 text-center" style={{ background: 'rgba(29,158,117,.12)' }}>
                 <div className="text-[9px] font-bold text-[#1D9E75] uppercase tracking-[0.5px]">Ahorras</div>
-                <div className="text-[14px] font-bold text-[#1D9E75]">€{monthlySavingsBundle.toFixed(2)}/mes</div>
+                <div className="text-[14px] font-bold text-[#1D9E75]">€{(gross * totalDisc / 100).toFixed(2)}/mes</div>
               </div>
             )}
           </div>
 
-          {/* Step progress bar */}
-          <div className="mb-3">
+          {/* Multi-seguro row */}
+          <div className="rounded-[12px] p-3 mb-2" style={{ background: 'rgba(13,13,13,.04)', border: '1px solid rgba(13,13,13,.06)' }}>
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="text-[12px] font-semibold text-[#0D0D0D]">Multi-seguro</span>
+              <span className="text-[13px] font-bold" style={{ color: bundleDisc > 0 ? '#1D9E75' : 'rgba(13,13,13,.25)' }}>
+                +{bundleDisc}%
+              </span>
+            </div>
             <div className="relative flex items-center justify-between">
-              {/* Track */}
-              <div className="absolute top-1/2 -translate-y-1/2" style={{ left: 8, right: 8 }}>
-                <div className="h-[3px] rounded-full overflow-hidden" style={{ background: 'rgba(13,13,13,.08)' }}>
-                  <motion.div className="h-full rounded-full"
-                    style={{ background: 'linear-gradient(90deg,#1D9E75,#25c48a)' }}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${barFillPct}%` }}
+              <div className="absolute top-1/2 -translate-y-1/2" style={{ left: 6, right: 6 }}>
+                <div className="h-[2px] rounded-full overflow-hidden" style={{ background: 'rgba(13,13,13,.08)' }}>
+                  <motion.div className="h-full rounded-full" style={{ background: '#1D9E75' }}
+                    initial={{ width: 0 }} animate={{ width: `${barFillPct}%` }}
                     transition={{ duration: 0.8, ease: 'easeOut' }} />
                 </div>
               </div>
-              {/* Dots */}
               {TIERS_UI.map((tier, i) => {
-                const reached   = activeCount > 0 && i <= tierIdx
-                const isCurrent = activeCount > 0 && i === tierIdx
+                const reached = activeCount > 0 && i <= tierIdx
                 return (
-                  <div key={i} className="relative z-10 w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
+                  <div key={i} className="relative z-10 w-3 h-3 rounded-full flex-shrink-0"
                     style={{
-                      background: reached ? '#1D9E75' : 'var(--sand-card)',
-                      border: `2px solid ${reached ? '#1D9E75' : 'rgba(13,13,13,.15)'}`,
-                    }}>
-                    {reached && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                    {isCurrent && (
-                      <motion.div className="absolute inset-[-4px] rounded-full pointer-events-none"
-                        style={{ border: '1.5px solid rgba(29,158,117,.5)' }}
-                        animate={{ scale: [1, 1.5, 1], opacity: [0.6, 0, 0.6] }}
-                        transition={{ duration: 1.5, repeat: Infinity }} />
-                    )}
-                  </div>
+                      background: reached ? '#1D9E75' : 'var(--sand-base)',
+                      border: `1.5px solid ${reached ? '#1D9E75' : 'rgba(13,13,13,.15)'}`,
+                    }} />
                 )
               })}
             </div>
-            {/* Tier labels */}
-            <div className="flex justify-between mt-2">
+            <div className="flex justify-between mt-1.5">
               {TIERS_UI.map((tier, i) => (
-                <div key={i} className="text-[10px] font-bold w-4 text-center"
-                  style={{ color: activeCount > 0 && i <= tierIdx ? '#1D9E75' : 'rgba(13,13,13,.25)' }}>
+                <div key={i} className="text-[9px] font-bold w-3 text-center"
+                  style={{ color: activeCount > 0 && i <= tierIdx ? '#1D9E75' : 'rgba(13,13,13,.2)' }}>
                   {tier.label}
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Status text */}
-          {activeCount >= 4 ? (
-            <div className="text-[12px] font-semibold text-[#1D9E75]">¡Máximo descuento conseguido!</div>
-          ) : (
-            <div className="text-[12px]" style={{ color: 'rgba(13,13,13,.4)' }}>
-              {activeCount === 0
-                ? 'Activa 2 seguros → consigue un 3% de descuento'
-                : activeCount === 1
-                ? 'Añade 1 seguro más → ahorra un 3% al mes'
-                : activeCount === 2
-                ? 'Añade un seguro más → sube al 7% de descuento'
-                : 'Añade un seguro más → alcanza el 12% máximo'}
+          {/* Fidelidad row */}
+          <div className="rounded-[12px] p-3" style={{ background: 'rgba(13,13,13,.04)', border: '1px solid rgba(13,13,13,.06)' }}>
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="text-[12px] font-semibold text-[#0D0D0D]">Fidelidad · Mes {loyaltyMonths}</span>
+              <span className="text-[13px] font-bold" style={{ color: loyaltyDisc > 0 ? '#1D9E75' : 'rgba(13,13,13,.25)' }}>
+                +{loyaltyDisc}%
+              </span>
             </div>
-          )}
+            <div className="h-[4px] rounded-full overflow-hidden mb-1.5" style={{ background: 'rgba(13,13,13,.08)' }}>
+              <motion.div className="h-full rounded-full" style={{ background: '#1D9E75' }}
+                initial={{ width: 0 }} animate={{ width: `${streakPct}%` }}
+                transition={{ duration: 0.8, ease: 'easeOut' }} />
+            </div>
+            {nextTier ? (
+              <div className="flex justify-between text-[10px]" style={{ color: 'rgba(13,13,13,.3)' }}>
+                <span>{nextTier.months - loyaltyMonths} meses para el siguiente nivel</span>
+                <span className="font-bold" style={{ color: '#1D9E75' }}>+{nextTier.disc}%</span>
+              </div>
+            ) : (
+              <div className="text-[10px] font-semibold" style={{ color: '#1D9E75' }}>Descuento máximo de fidelidad</div>
+            )}
+          </div>
         </motion.div>
 
         {/* Insurance cards */}
@@ -643,32 +642,6 @@ export default function HomePage() {
             </AnimatePresence>
           </motion.div>
         )}
-
-        {/* Loyalty card */}
-        <motion.div variants={fadeUp} className="rounded-[18px] p-4 mt-2 mb-2"
-          style={{ background: 'var(--sand-card)', border: '1px solid rgba(29,158,117,.2)' }}>
-          <div className="flex justify-between items-start">
-            <div>
-              <div className="text-[10px] font-bold text-[#1D9E75] uppercase tracking-[1px]">Mes {loyaltyMonths} con Daily</div>
-              <div className="text-[20px] font-bold text-[#0D0D0D] mt-1 tracking-tight">{totalDisc}% de descuento</div>
-              <div className="text-[11px] text-[#0D0D0D]/40 mt-0.5">Para siempre, mientras sigas</div>
-            </div>
-            <div className="rounded-[10px] px-3 py-2 text-center" style={{ background: 'rgba(29,158,117,.12)' }}>
-              <div className="text-[9px] font-bold text-[#1D9E75] uppercase tracking-[0.5px]">Ahorrado</div>
-              <div className="text-[14px] font-bold text-[#1D9E75] mt-0.5">€{saved}</div>
-            </div>
-          </div>
-          <div className="h-[5px] rounded-full mt-3 mb-1.5 overflow-hidden" style={{ background: 'rgba(13,13,13,.08)' }}>
-            <motion.div className="h-full rounded-full" style={{ background: 'linear-gradient(90deg,#1D9E75,#25c48a)' }}
-              initial={{ width: 0 }} animate={{ width: `${streakPct}%` }} transition={{ duration: 0.8, ease: 'easeOut' }} />
-          </div>
-          {nextTier && (
-            <div className="flex justify-between text-[11px] text-[#0D0D0D]/30">
-              <span><strong className="text-[#0D0D0D]/60">{nextTier.months - loyaltyMonths} meses</strong> para el siguiente nivel</span>
-              <span className="text-[#1D9E75] font-bold">{nextTier.disc}%</span>
-            </div>
-          )}
-        </motion.div>
 
         <div className="text-center text-[12px] text-[#0D0D0D]/20 mt-4">Cancela con un toque. Siempre.</div>
       </motion.div>
