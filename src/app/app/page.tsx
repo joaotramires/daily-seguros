@@ -118,14 +118,22 @@ export default function HomePage() {
         if (data.policies?.length) {
           const newActive = { home: false, pet: false }
           const newIds: Record<string, string> = {}
-          data.policies.forEach((p: { id: string; product: string; monthly_premium: number }) => {
+          const newPrices: Partial<Record<'home' | 'pet', number>> = {}
+          // Sort so most-recent policy per product wins (handles duplicate actives)
+          const sorted = [...data.policies].sort((a: { created_at: string }, b: { created_at: string }) =>
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          )
+          sorted.forEach((p: { id: string; product: string; monthly_premium: number }) => {
             if (p.product === 'home' || p.product === 'pet') {
               newActive[p.product as 'home' | 'pet'] = true
               newIds[p.product] = p.id
+              newPrices[p.product as 'home' | 'pet'] = Number(p.monthly_premium)
             }
           })
           setActive(newActive)
           setPolicyIds(newIds)
+          // DB is source of truth — override stale localStorage prices
+          setPrices(prev => ({ ...prev, ...newPrices }))
           if (newActive.pet && !chip) setChipBannerVisible(true)
         }
         if (data.loyaltyMonths) setLoyaltyMonths(data.loyaltyMonths)

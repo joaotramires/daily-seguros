@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   )
 
   const [{ data: policies }, { data: customer }, { data: claims }, { data: paymentMethods }] = await Promise.all([
-    supabase.from('policies').select('id, product, monthly_premium, starts_at').eq('customer_id', customerId).eq('status', 'active'),
+    supabase.from('policies').select('id, product, monthly_premium, starts_at, created_at').eq('customer_id', customerId).eq('status', 'active'),
     supabase.from('customers').select('name, email, phone, loyalty_months, referral_code').eq('id', customerId).single(),
     supabase.from('claims').select('id, description, status, created_at').eq('customer_id', customerId).order('created_at', { ascending: false }),
     supabase.from('payment_methods').select('id, type, label, sub, is_default').eq('customer_id', customerId).order('created_at'),
