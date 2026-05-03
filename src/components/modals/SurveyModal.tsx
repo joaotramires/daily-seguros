@@ -16,7 +16,7 @@ interface SurveyModalProps {
   onLoggedIn?: (name: string, customerId: string) => void
 }
 
-type Phase = 'questions' | 'price' | 'payment' | 'processing' | 'success'
+type Phase = 'questions' | 'price' | 'details' | 'payment' | 'processing' | 'success'
 
 export default function SurveyModal({ productId, activeCount, onClose, onActivated, customerName, isLoggedIn, onLoggedIn }: SurveyModalProps) {
   const product = PRODUCTS.find(p => p.id === productId)
@@ -67,7 +67,8 @@ export default function SurveyModal({ productId, activeCount, onClose, onActivat
   }
 
   function goBack() {
-    if (phase === 'payment') { setPhase('price'); return }
+    if (phase === 'payment') { setPhase('details'); return }
+    if (phase === 'details') { setPhase('price'); return }
     if (phase === 'price')   { setPhase('questions'); setQStep(nQ - 1); return }
     if (qStep > 0)           { setQStep(q => q - 1) }
   }
@@ -150,7 +151,9 @@ export default function SurveyModal({ productId, activeCount, onClose, onActivat
                 <div className="text-[11px] text-[#0D0D0D]/40">
                   {phase === 'questions'
                     ? `Pregunta ${qStep + 1} de ${nQ}`
-                    : phase === 'price' ? 'Tu precio' : 'Confirmar pago'}
+                    : phase === 'price' ? 'Tu precio'
+                    : phase === 'details' ? 'Cobertura incluida'
+                    : 'Confirmar pago'}
                 </div>
               </div>
             </div>
@@ -229,13 +232,86 @@ export default function SurveyModal({ productId, activeCount, onClose, onActivat
                   </div>
                 ))}
               </motion.div>
-              <motion.button variants={fadeUp} whileTap={tapScale} onClick={() => setPhase('payment')}
+              <motion.button variants={fadeUp} whileTap={tapScale} onClick={() => setPhase('details')}
                 className="w-full py-4 rounded-[13px] text-[15px] font-semibold text-white mb-2"
                 style={{ background: '#0D0D0D' }}>
-                Continuar al pago →
+                Ver cobertura incluida →
               </motion.button>
               <button onClick={goBack} className="w-full text-[12px] text-[#0D0D0D]/35 py-2">
                 ← Cambiar respuestas
+              </button>
+            </motion.div>
+          )}
+
+          {/* Coverage details */}
+          {phase === 'details' && product.coverageDetails && (
+            <motion.div key="details" variants={stagger} initial="hidden" animate="visible">
+              <motion.h3 variants={fadeUp} className="text-[20px] font-bold text-[#0D0D0D] mb-1 tracking-tight">
+                Tu cobertura incluye
+              </motion.h3>
+              <motion.p variants={fadeUp} className="text-[12px] text-[#0D0D0D]/45 mb-4">
+                Ficha resumen · {product.label} · €{finalPrice.toFixed(2)}{product.id === 'travel' ? '/viaje' : '/mes'}
+              </motion.p>
+
+              <motion.div variants={fadeUp} className="rounded-[13px] p-4 mb-3"
+                style={{ background: 'rgba(29,158,117,.07)', border: '1px solid rgba(29,158,117,.2)' }}>
+                <div className="text-[10px] font-bold text-[#1D9E75] uppercase tracking-[0.8px] mb-2.5">Coberturas incluidas</div>
+                {product.coverageDetails.coberturas.map((c, i) => (
+                  <div key={i} className="flex items-start gap-2 mb-1.5 last:mb-0">
+                    <span className="text-[#1D9E75] text-[12px] mt-0.5 flex-shrink-0">✓</span>
+                    <span className="text-[13px] text-[#0D0D0D]">{c}</span>
+                  </div>
+                ))}
+              </motion.div>
+
+              <motion.div variants={fadeUp} className="rounded-[13px] p-4 mb-3"
+                style={{ background: 'rgba(13,13,13,.04)', border: '1px solid rgba(13,13,13,.08)' }}>
+                <div className="text-[10px] font-bold text-[#0D0D0D]/45 uppercase tracking-[0.8px] mb-2.5">Límites de cobertura</div>
+                {product.coverageDetails.limites.map((l, i) => (
+                  <div key={i} className="flex items-start gap-2 mb-1.5 last:mb-0">
+                    <span className="text-[12px] mt-0.5 flex-shrink-0">📊</span>
+                    <span className="text-[13px] text-[#0D0D0D]/70">{l}</span>
+                  </div>
+                ))}
+                <div className="mt-2.5 pt-2.5 border-t border-[#0D0D0D]/[0.07]">
+                  <span className="text-[11px] text-[#0D0D0D]/40">Franquicia: </span>
+                  <span className="text-[11px] font-semibold text-[#0D0D0D]/65">{product.coverageDetails.franquia}</span>
+                </div>
+              </motion.div>
+
+              <motion.div variants={fadeUp} className="rounded-[13px] p-4 mb-3"
+                style={{ background: 'rgba(216,90,48,.06)', border: '1px solid rgba(216,90,48,.15)' }}>
+                <div className="text-[10px] font-bold uppercase tracking-[0.8px] mb-2.5" style={{ color: '#D85A30' }}>Principales exclusiones</div>
+                {product.coverageDetails.exclusiones.map((e, i) => (
+                  <div key={i} className="flex items-start gap-2 mb-1.5 last:mb-0">
+                    <span className="text-[12px] mt-0.5 flex-shrink-0" style={{ color: '#D85A30' }}>✕</span>
+                    <span className="text-[13px] text-[#0D0D0D]/60">{e}</span>
+                  </div>
+                ))}
+              </motion.div>
+
+              {(product.carenciaDays ?? 0) > 0 && (
+                <motion.div variants={fadeUp} className="rounded-[13px] p-3.5 mb-4 flex items-start gap-2.5"
+                  style={{ background: 'rgba(255,193,7,.1)', border: '1px solid rgba(255,193,7,.3)' }}>
+                  <span className="text-[16px] flex-shrink-0">⏳</span>
+                  <div>
+                    <div className="text-[12px] font-bold" style={{ color: '#8B6000' }}>
+                      Período de carencia: {product.carenciaDays} días
+                    </div>
+                    <div className="text-[11px] text-[#0D0D0D]/50 mt-0.5">
+                      La cobertura se activa {product.carenciaDays} días tras la contratación. No cubre incidentes anteriores.
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              <motion.button variants={fadeUp} whileTap={tapScale} onClick={() => setPhase('payment')}
+                className="w-full py-4 rounded-[13px] text-[15px] font-semibold text-white mb-2"
+                style={{ background: '#0D0D0D' }}>
+                Confirmar y pagar →
+              </motion.button>
+              <button onClick={goBack} className="w-full text-[12px] text-[#0D0D0D]/35 py-2">
+                ← Volver al precio
               </button>
             </motion.div>
           )}
@@ -325,7 +401,13 @@ export default function SurveyModal({ productId, activeCount, onClose, onActivat
                 ¡Listo!
               </motion.h3>
               <motion.p variants={fadeUp} className="text-[13px] text-[#0D0D0D]/45 mb-5 leading-relaxed">
-                Tu seguro de {product.label.toLowerCase()}<br />está activo desde hoy.
+                {(() => {
+                  const days = product.carenciaDays ?? 0
+                  if (days === 0) return <>Tu seguro de {product.label.toLowerCase()}<br />está activo desde hoy.</>
+                  const d = new Date(); d.setDate(d.getDate() + days)
+                  const date = d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })
+                  return <>Pago confirmado. Tu cobertura<br />comenzará el <strong className="text-[#0D0D0D]/70">{date}</strong>.</>
+                })()}
               </motion.p>
 
               <motion.div variants={fadeUp} className="rounded-[14px] p-4 mb-4 text-left"

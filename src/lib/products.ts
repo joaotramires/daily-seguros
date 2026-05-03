@@ -51,6 +51,28 @@ export const PRODUCTS: Product[] = [
         { label: 'Muy alto', desc: 'Más de €60.000',     multiplier: 1.62 },
       ]},
     ],
+    carenciaDays: 7,
+    coverageDetails: {
+      coberturas: [
+        'Incendio y explosión',
+        'Daños por agua (tuberías y filtraciones)',
+        'Robo y vandalismo',
+        'Daños eléctricos',
+        'Responsabilidad civil familiar',
+      ],
+      limites: [
+        'Contenido: hasta €30.000 (plan Estándar)',
+        'Responsabilidad civil: hasta €150.000',
+        'Pérdida de alquiler: hasta 6 meses',
+      ],
+      exclusiones: [
+        'Desgaste natural y obras de mantenimiento',
+        'Daños estéticos sin causa súbita',
+        'Siniestros ocurridos antes del inicio de cobertura',
+        'Bienes de terceros fuera del inmueble asegurado',
+      ],
+      franquia: '€150 por siniestro',
+    },
   },
   {
     id: 'pet', label: 'Mascota', desc: 'Porque el vet siempre cobra más',
@@ -87,6 +109,27 @@ export const PRODUCTS: Product[] = [
         { label: 'Problemas graves', desc: 'Cirugías o enfermedades crónicas',  multiplier: 1.65 },
       ]},
     ],
+    carenciaDays: 3,
+    coverageDetails: {
+      coberturas: [
+        'Consultas veterinarias ilimitadas',
+        'Cirugía y hospitalización',
+        'Diagnósticos: radiografías, análisis de sangre',
+        'Vacunaciones anuales incluidas',
+        'Responsabilidad civil (perros)',
+      ],
+      limites: [
+        'Gastos veterinarios: hasta €3.000/año',
+        'Cirugía: hasta €2.000 por intervención',
+        'Responsabilidad civil: hasta €30.000',
+      ],
+      exclusiones: [
+        'Enfermedades preexistentes al inicio del contrato',
+        'Tratamientos estéticos o de reproducción',
+        'Siniestros ocurridos durante el período de carencia',
+      ],
+      franquia: 'Sin franquicia en consultas · €100 en cirugías mayores',
+    },
   },
   {
     id: 'travel', label: 'Viaje', desc: 'Ese viaje que llevas meses planeando',
@@ -129,6 +172,29 @@ export const PRODUCTS: Product[] = [
         { label: 'Deportes extremos', desc: 'Paracaidismo, alpinismo…',    multiplier: 2.15 },
       ]},
     ],
+    carenciaDays: 0,
+    coverageDetails: {
+      coberturas: [
+        'Asistencia médica de urgencia en el extranjero',
+        'Repatriación sanitaria',
+        'Cancelación del viaje',
+        'Pérdida y retraso de equipaje',
+        'Responsabilidad civil en viaje',
+      ],
+      limites: [
+        'Gastos médicos: hasta €150.000',
+        'Equipaje: hasta €1.500',
+        'Cancelación: hasta €3.000',
+        'Retraso de vuelo: a partir de 4 horas',
+      ],
+      exclusiones: [
+        'Deportes de riesgo no declarados al contratar',
+        'Enfermedades preexistentes no declaradas',
+        'Embarazo superior a 28 semanas',
+        'Destinos con alerta de viaje del MAEC',
+      ],
+      franquia: 'Sin franquicia en urgencias médicas · €150 en cancelación',
+    },
   },
 ]
 

@@ -36,6 +36,9 @@ export default function ClaimsPage() {
   const [pendingDelete, setPendingDelete] = useState<string | null>(null)
   const [mediaFiles, setMediaFiles] = useState<File[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const today = new Date().toISOString().split('T')[0]
+  const [incidentDate, setIncidentDate] = useState(today)
+  const [claimError, setClaimError] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -74,6 +77,7 @@ export default function ClaimsPage() {
 
   async function submitClaim() {
     if (!newDesc.trim()) return
+    setClaimError(null)
     const tempId = 'DLY-' + Math.floor(1000 + Math.random() * 9000)
     const newClaim = { id: tempId, desc: newDesc.slice(0, 50), day: 1, isNew: true }
     setClaims(prev => [newClaim, ...prev])
@@ -81,6 +85,7 @@ export default function ClaimsPage() {
     setShowForm(false)
     const descToSend = newDesc
     const filesToSend = mediaFiles
+    const dateToSend = incidentDate
     setNewDesc('')
     setMediaFiles([])
 
@@ -100,9 +105,15 @@ export default function ClaimsPage() {
       const res = await fetch('/api/create-claim', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customerId, policyId: selectedPolicy || null, description: descToSend, mediaUrls }),
+        body: JSON.stringify({ customerId, policyId: selectedPolicy || null, description: descToSend, mediaUrls, incidentDate: dateToSend }),
       })
       const data = await res.json()
+      if (data.error) {
+        setClaims(prev => prev.filter(c => c.id !== tempId))
+        setShowForm(true)
+        setClaimError(data.error)
+        return
+      }
       if (data.claimId) {
         setClaims(prev => prev.map(c => c.id === tempId ? { ...c, id: data.claimId } : c))
         setExpandedId(data.claimId)
@@ -335,6 +346,17 @@ export default function ClaimsPage() {
                   })}
                 </select>
               )}
+              <div className="mb-3">
+                <div className="text-[10px] font-bold text-[#0D0D0D]/40 uppercase tracking-[0.8px] mb-1.5">¿Cuándo ocurrió?</div>
+                <input
+                  type="date"
+                  value={incidentDate}
+                  max={today}
+                  onChange={e => setIncidentDate(e.target.value)}
+                  className="w-full px-3 py-3 rounded-[11px] text-[13px] text-[#0D0D0D] border border-[#0D0D0D]/12"
+                  style={{ background: 'rgba(13,13,13,.05)' }}
+                />
+              </div>
               <textarea value={newDesc} onChange={e => setNewDesc(e.target.value)}
                 placeholder="Describe brevemente qué ocurrió, cuándo y dónde…"
                 className="w-full px-3 py-3 rounded-[11px] text-[13px] text-[#0D0D0D] mb-3 border border-[#0D0D0D]/12 resize-none"
@@ -378,6 +400,12 @@ export default function ClaimsPage() {
                 </div>
               )}
 
+              {claimError && (
+                <div className="mb-3 rounded-[11px] p-3 text-[12px] font-medium leading-snug"
+                  style={{ background: 'rgba(216,90,48,.1)', color: '#D85A30' }}>
+                  {claimError}
+                </div>
+              )}
               <motion.button whileTap={tapScale} onClick={submitClaim}
                 className="w-full py-3 rounded-[11px] text-[14px] font-semibold text-white"
                 style={{ background: '#1D9E75' }}>

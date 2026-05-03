@@ -21,6 +21,10 @@ export async function POST(req: NextRequest) {
     .eq('product', product)
     .eq('status', 'active')
 
+  const carenciaDays: Record<string, number> = { home: 7, pet: 3, travel: 0 }
+  const startsAt = new Date()
+  startsAt.setDate(startsAt.getDate() + (carenciaDays[product] ?? 0))
+
   const { data, error } = await supabase
     .from('policies')
     .insert({
@@ -30,7 +34,7 @@ export async function POST(req: NextRequest) {
       monthly_premium: monthlyPremium,
       annual_premium: monthlyPremium * 12,
       answers: answers || {},
-      starts_at: new Date().toISOString(),
+      starts_at: startsAt.toISOString(),
     })
     .select('id')
     .single()

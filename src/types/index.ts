@@ -12,6 +12,13 @@ export interface Question {
   options: AnswerOption[]
 }
 
+export interface CoverageDetails {
+  coberturas: string[]
+  limites: string[]
+  exclusiones: string[]
+  franquia: string
+}
+
 export interface Product {
   id: ProductId
   label: string
@@ -20,6 +27,8 @@ export interface Product {
   icon: string
   color: string
   questions: Question[]
+  carenciaDays?: number
+  coverageDetails?: CoverageDetails
 }
 
 export interface Policy {
