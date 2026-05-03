@@ -390,7 +390,7 @@ export default function HomePage() {
                           ) : `€${price.toFixed(2)}/mes`
                         ) : <>
                             <span>Desde €{product.desde.toFixed(2)}/mes</span>
-                            <div className="text-[11px] font-medium mt-0.5" style={{ color: product.color }}>
+                            <div className="text-[11px] font-medium mt-0.5" style={{ color: '#1D9E75' }}>
                               {getComp(product.desde)}
                             </div>
                           </> }
