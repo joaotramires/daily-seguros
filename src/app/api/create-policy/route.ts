@@ -13,6 +13,14 @@ export async function POST(req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
+  // Cancel any existing active policy for this customer+product before creating the new one
+  await supabase
+    .from('policies')
+    .update({ status: 'cancelled' })
+    .eq('customer_id', customerId)
+    .eq('product', product)
+    .eq('status', 'active')
+
   const { data, error } = await supabase
     .from('policies')
     .insert({
