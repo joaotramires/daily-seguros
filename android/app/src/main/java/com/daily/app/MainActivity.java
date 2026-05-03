@@ -80,14 +80,24 @@ public class MainActivity extends BridgeActivity {
 
     private void injectLogic(WebView view) {
         // CSS to hide mockup and ensure full-screen
-        String css = ".phone-frame { width: 100vw !important; height: 100vh !important; max-width: none !important; border: none !important; margin: 0 !important; border-radius: 0 !important; background: #F5F0E8 !important; } " +
-                     ".phone-frame > div:has(.bg-black.rounded-full) { display: none !important; } " +
-                     ".phone-frame > div:first-child { display: none !important; }";
+        // We only hide elements that explicitly look like the mock notch bar (contains 9:41 or the black rounded pill)
+        // Also ensure .phone-frame doesn't have borders or width limits on native
+        String css = ".phone-frame { width: 100vw !important; height: 100vh !important; max-width: none !important; border: none !important; margin: 0 !important; border-radius: 0 !important; background: transparent !important; display: flex !important; flex-direction: column !important; } " +
+                     ".phone-frame > div:has(.bg-black.rounded-full) { display: none !important; }";
 
         String js = "(function() {" +
                     "  var style = document.createElement('style');" +
                     "  style.innerHTML = '" + css + "';" +
                     "  document.head.appendChild(style);" +
+
+                    "  /* Specific JS cleanup for the 9:41 mock bar */" +
+                    "  function cleanup() {" +
+                    "    var divs = Array.from(document.querySelectorAll('.phone-frame > div'));" +
+                    "    divs.forEach(function(d) {" +
+                    "      if (d.textContent.includes('9:41')) d.style.display = 'none';" +
+                    "    });" +
+                    "  }" +
+                    "  cleanup(); setInterval(cleanup, 1000);" +
 
                     // Bridge: links a Supabase Auth user (email) to the app's customerId in localStorage.
                     // Called after Google sign-in completes on the native side.

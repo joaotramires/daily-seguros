@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+import { PushNotifications } from '@capacitor/push-notifications'
 import Sheet from '@/components/ui/Sheet'
 import { tapScale } from '@/lib/animations'
 import { useIsNative } from '@/lib/useIsNative'
@@ -61,7 +62,25 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     const storedName = localStorage.getItem('customerName') || ''
     if (storedName) setInitial(storedName[0].toUpperCase())
 
-    // Bridge Supabase OAuth sessions (Google Sign-In) to the app's customer system.
+    // 1. Push Notifications Setup
+    if (isNative) {
+      PushNotifications.requestPermissions().then(result => {
+        if (result.receive === 'granted') PushNotifications.register()
+      })
+      PushNotifications.addListener('registration', async (token) => {
+        localStorage.setItem('fcm_token', token.value)
+        const customerId = localStorage.getItem('customerId')
+        if (customerId) {
+          await fetch('/api/update-customer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: customerId, fcm_token: token.value })
+          })
+        }
+      })
+    }
+
+    // 2. Bridge Supabase OAuth sessions
     // Fires after the OAuth redirect returns and Supabase restores the session.
     const supabase = createClient()
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -71,11 +90,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         try {
           const res = await fetch('/api/login-customer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) })
           const d   = await res.json()
+          let finalId = ''
           if (d.found) {
             localStorage.setItem('customerId',   d.customerId)
             localStorage.setItem('customerName', d.name)
             setInitial(d.name[0].toUpperCase())
-            window.location.reload()
+            finalId = d.customerId
           } else {
             const r2 = await fetch('/api/register-customer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, city: 'Madrid' }) })
             const d2 = await r2.json()
@@ -83,9 +103,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               localStorage.setItem('customerId',   d2.customerId)
               localStorage.setItem('customerName', name)
               setInitial(name[0].toUpperCase())
-              window.location.reload()
+              finalId = d2.customerId
             }
           }
+
+          // Sync FCM token immediately after identifying the customer
+          const token = localStorage.getItem('fcm_token')
+          if (finalId && token) {
+            await fetch('/api/update-customer', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: finalId, fcm_token: token })
+            })
+          }
+
+          window.location.reload()
         } catch (e) { console.error('OAuth bridge error', e) }
       }
     })

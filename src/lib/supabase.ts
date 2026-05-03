@@ -20,7 +20,8 @@ export function createClient() {
 //   referral_code text unique default substring(md5(random()::text), 1, 8),
 //   referred_by text,
 //   stripe_customer_id text,
-//   loyalty_months int default 0
+//   loyalty_months int default 0,
+//   fcm_token text
 // );
 // 
 // create table policies (

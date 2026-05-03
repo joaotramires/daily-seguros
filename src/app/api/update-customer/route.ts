@@ -1,16 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-export async function PATCH(req: NextRequest) {
-  const { customerId, field, value } = await req.json()
+export async function POST(req: NextRequest) {
+  const body = await req.json()
+  const { id, ...updates } = body
 
-  if (!customerId || !field || value === undefined) {
-    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
-  }
-
-  const allowed = ['name', 'email', 'phone']
-  if (!allowed.includes(field)) {
-    return NextResponse.json({ error: 'Invalid field' }, { status: 400 })
+  if (!id) {
+    return NextResponse.json({ error: 'Missing customer id' }, { status: 400 })
   }
 
   const supabase = createClient(
@@ -20,8 +16,8 @@ export async function PATCH(req: NextRequest) {
 
   const { error } = await supabase
     .from('customers')
-    .update({ [field]: value })
-    .eq('id', customerId)
+    .update(updates)
+    .eq('id', id)
 
   if (error) {
     console.error('Supabase error:', error)
