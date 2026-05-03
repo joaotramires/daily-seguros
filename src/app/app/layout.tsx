@@ -4,6 +4,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import Sheet from '@/components/ui/Sheet'
 import { tapScale } from '@/lib/animations'
+import { useIsNative } from '@/lib/useIsNative'
 
 const NAV: { path: string; label: string; icon: React.ReactNode }[] = [
   {
@@ -45,6 +46,7 @@ const NAV: { path: string; label: string; icon: React.ReactNode }[] = [
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router   = useRouter()
+  const isNative = useIsNative()
   const [initial, setInitial]         = useState('')
   const [showAuth, setShowAuth]       = useState(false)
   const [email, setEmail]             = useState('')
@@ -106,15 +108,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="phone-frame">
-      {/* Status bar */}
-      <div className="flex justify-between items-center px-7 pt-3 pb-0 text-[#0D0D0D] text-[13px] font-bold flex-shrink-0"
-        style={{ background: 'var(--sand-base)' }}>
-        <span>9:41</span>
-        <div className="w-28 h-7 bg-[#0D0D0D] rounded-full" />
-        <svg width="16" height="12" viewBox="0 0 16 12" fill="#0D0D0D">
-          <path d="M1 8h2v4H1zM5 5h2v7H5zM9 3h2v9H9zM13 0h2v12h-2z"/>
-        </svg>
-      </div>
+      {!isNative && (
+        <div className="flex justify-between items-center px-7 pt-3 pb-0 text-[#0D0D0D] text-[13px] font-bold flex-shrink-0"
+          style={{ background: 'var(--sand-base)' }}>
+          <span>9:41</span>
+          <div className="w-28 h-7 bg-[#0D0D0D] rounded-full" />
+          <svg width="16" height="12" viewBox="0 0 16 12" fill="#0D0D0D">
+            <path d="M1 8h2v4H1zM5 5h2v7H5zM9 3h2v9H9zM13 0h2v12h-2z"/>
+          </svg>
+        </div>
+      )}
 
       {/* Header */}
       <div className="flex justify-between items-center px-6 py-3 flex-shrink-0 border-b border-[#0D0D0D]/[0.07]"

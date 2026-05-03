@@ -2,20 +2,23 @@
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { stagger, fadeUp, tapScale } from '@/lib/animations'
+import { useIsNative } from '@/lib/useIsNative'
 
 export default function LandingPage() {
   const router = useRouter()
+  const isNative = useIsNative()
 
   return (
     <div className="phone-frame" style={{ background: '#111' }}>
-      {/* Status bar */}
-      <div className="flex justify-between items-center px-7 pt-3 pb-0 text-white text-[13px] font-bold flex-shrink-0">
-        <span>9:41</span>
-        <div className="w-28 h-7 bg-black rounded-full" />
-        <svg width="16" height="12" viewBox="0 0 16 12" fill="white">
-          <path d="M1 8h2v4H1zM5 5h2v7H5zM9 3h2v9H9zM13 0h2v12h-2z"/>
-        </svg>
-      </div>
+      {!isNative && (
+        <div className="flex justify-between items-center px-7 pt-3 pb-0 text-white text-[13px] font-bold flex-shrink-0">
+          <span>9:41</span>
+          <div className="w-28 h-7 bg-black rounded-full" />
+          <svg width="16" height="12" viewBox="0 0 16 12" fill="white">
+            <path d="M1 8h2v4H1zM5 5h2v7H5zM9 3h2v9H9zM13 0h2v12h-2z"/>
+          </svg>
+        </div>
+      )}
 
       {/* Dark gradient top */}
       <div

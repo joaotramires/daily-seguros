@@ -3,9 +3,11 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { fadeUp, stagger, tapScale } from '@/lib/animations'
+import { useIsNative } from '@/lib/useIsNative'
 
 export default function OnboardingPage() {
   const router = useRouter()
+  const isNative = useIsNative()
   const [form, setForm] = useState({ name: '', email: '', phone: '', city: 'Madrid' })
   const [loading, setLoading] = useState(false)
 
@@ -32,13 +34,15 @@ export default function OnboardingPage() {
 
   return (
     <div className="phone-frame" style={{ background: '#111' }}>
-      <div className="flex justify-between items-center px-7 pt-3 text-white text-[13px] font-bold flex-shrink-0">
-        <span>9:41</span>
-        <div className="w-28 h-7 bg-black rounded-full" />
-        <svg width="16" height="12" viewBox="0 0 16 12" fill="white">
-          <path d="M1 8h2v4H1zM5 5h2v7H5zM9 3h2v9H9zM13 0h2v12h-2z"/>
-        </svg>
-      </div>
+      {!isNative && (
+        <div className="flex justify-between items-center px-7 pt-3 text-white text-[13px] font-bold flex-shrink-0">
+          <span>9:41</span>
+          <div className="w-28 h-7 bg-black rounded-full" />
+          <svg width="16" height="12" viewBox="0 0 16 12" fill="white">
+            <path d="M1 8h2v4H1zM5 5h2v7H5zM9 3h2v9H9zM13 0h2v12h-2z"/>
+          </svg>
+        </div>
+      )}
 
       <div className="px-6 pt-4 pb-3 flex-shrink-0" style={{ background: 'linear-gradient(160deg,#0d1a10,#080d07)' }}>
         <div className="text-white/80 text-[18px] font-semibold tracking-tight">daily</div>
