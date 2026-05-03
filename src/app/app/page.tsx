@@ -506,14 +506,19 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-          <div className="text-[10px] text-right flex-shrink-0" style={{ color: 'rgba(13,13,13,.35)', maxWidth: 100 }}>
-            {activeCount === 0
-              ? '2 seguros → +3%'
-              : activeCount === 1
-              ? 'Añade 1 más → +3%'
-              : nextTier
-              ? `Mes ${nextTier.months} → +${nextTier.disc}%`
-              : '¡Máximo!'}
+          <div className="text-[10px] text-right flex-shrink-0 flex flex-col gap-1" style={{ minWidth: 90 }}>
+            {/* Multi-seguro hint */}
+            <span style={{ color: bundleDisc >= 7 ? 'rgba(13,13,13,.2)' : 'rgba(13,13,13,.35)' }}>
+              {activeCount === 0 ? '2 seguros → +3%'
+                : activeCount === 1 ? '+1 seguro → +3%'
+                : bundleDisc < 7  ? '+1 seguro → +7%'
+                : '✓ +7% multi'}
+            </span>
+            {/* Fidelidad hint */}
+            <span style={{ color: loyaltyDisc >= 15 ? 'rgba(13,13,13,.2)' : 'rgba(13,13,13,.35)' }}>
+              {!nextTier ? '✓ +15% fidelidad'
+                : `Mes ${nextTier.months} → +${nextTier.disc}%`}
+            </span>
           </div>
         </motion.div>
 
