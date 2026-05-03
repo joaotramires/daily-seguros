@@ -283,128 +283,45 @@ export default function HomePage() {
     <div className="px-4 py-4 pb-6 relative">
       <motion.div variants={stagger} initial="hidden" animate="visible">
 
-        {/* Referral box */}
-        <motion.div variants={fadeUp} className="rounded-[20px] overflow-hidden mb-3">
-          <div className="p-5" style={{ background: '#0D0D0D' }}>
-
-            <div className="flex items-start gap-3 mb-4">
-              <div className="flex-1">
-                <div className="text-[10px] font-bold uppercase tracking-[1.5px] mb-2" style={{ color: 'rgba(255,255,255,.3)' }}>
-                  Daily Club · Recompensas
-                </div>
-                <div className="text-[26px] font-bold text-white leading-tight tracking-tight">
-                  Netflix gratis.{' '}
-                  <span style={{ color: '#E50914' }}>3 meses.</span>
-                </div>
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="text-[12px]" style={{ color: 'rgba(255,255,255,.4)' }}>Trae 1 amigo</span>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                    style={{ background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.55)' }}>
-                    👥 para los dos
-                  </span>
-                </div>
+        {/* Netflix referral — compact banner */}
+        <motion.div variants={fadeUp} className="rounded-[16px] overflow-hidden mb-3">
+          <div className="px-4 py-3 flex items-center gap-3" style={{ background: '#0D0D0D' }}>
+            <svg width="18" height="31" viewBox="0 0 111 190" fill="#E50914" className="flex-shrink-0">
+              <path d="M0 0v190h40V78.7L71 190h40V0H71v111.3L40 0H0z"/>
+            </svg>
+            <div className="flex-1 min-w-0">
+              <div className="text-[13px] font-bold text-white leading-tight">
+                Netflix gratis · <span style={{ color: '#E50914' }}>3 meses</span>
               </div>
-              <svg width="38" height="66" viewBox="0 0 111 190" fill="#E50914" className="flex-shrink-0 mt-1">
-                <path d="M0 0v190h40V78.7L71 190h40V0H71v111.3L40 0H0z"/>
-              </svg>
+              <div className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,.35)' }}>
+                Trae 1 amigo · para los dos
+              </div>
             </div>
-
-            <div className="flex items-center gap-2 mb-3">
-              <div className="flex-1 px-3.5 py-2.5 rounded-[10px] font-bold tracking-[3px] text-[14px] text-white"
-                style={{ background: 'rgba(255,255,255,.08)' }}>
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <span className="text-[9px] font-bold tracking-[1.5px]" style={{ color: 'rgba(255,255,255,.35)' }}>
                 {(referralCode ?? 'DAILY-DEMO').toUpperCase()}
-              </div>
+              </span>
               <motion.button whileTap={tapScale} onClick={copyReferral}
-                className="px-4 py-2.5 rounded-[10px] text-[12px] font-bold transition-all"
+                className="px-2.5 py-1.5 rounded-[8px] text-[10px] font-bold"
                 style={refCopied ? { background: 'rgba(29,158,117,.9)', color: 'white' } : { background: '#E50914', color: 'white' }}>
-                {refCopied ? '✓ Copiado' : 'Copiar'}
+                {refCopied ? '✓' : 'Copiar'}
               </motion.button>
             </div>
-
-            <div className="flex items-center gap-2">
-              <div className="flex-1 h-[2px] rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,.1)' }}>
-                <div className="h-full rounded-full w-0" style={{ background: '#E50914' }} />
-              </div>
-              <div className="text-[10px]" style={{ color: 'rgba(255,255,255,.25)' }}>0 / 1 amigo</div>
-            </div>
           </div>
         </motion.div>
 
-        {/* Hero card */}
-        <motion.div variants={fadeUp} className="rounded-[20px] p-6 mb-3 text-center"
-          style={{ background: '#0D0D0D' }}>
-          <motion.div key={netDisplay.toFixed(2)} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-            className="text-[50px] font-bold text-white tracking-[-2px] leading-none">
-            €{netDisplay.toFixed(2)}
-          </motion.div>
-          <div className="text-[11px] text-white/30 mt-2 uppercase tracking-[0.8px] font-medium">
-            {activeCount === 0 ? 'Activa tu primer seguro ↓' : `al mes · ${activeCount} activo${activeCount !== 1 ? 's' : ''}`}
+        {/* Insurance section header */}
+        <div className="flex items-center justify-between mb-2 px-0.5">
+          <div className="text-[11px] font-bold uppercase tracking-[0.8px]" style={{ color: 'rgba(13,13,13,.35)' }}>
+            Tus seguros
           </div>
-        </motion.div>
-
-        {/* Unified discount card */}
-        <motion.div variants={fadeUp} className="rounded-[18px] p-4 mb-3"
-          style={{
-            background: 'var(--sand-card)',
-            border: totalDisc > 0 ? '1px solid rgba(29,158,117,.25)' : '1px solid rgba(13,13,13,.07)',
-            boxShadow: totalDisc > 0 ? 'inset 0 0 0 9999px rgba(29,158,117,.05)' : 'none',
-          }}>
-
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <div className="text-[10px] font-bold uppercase tracking-[1px] mb-1"
-                style={{ color: totalDisc > 0 ? '#1D9E75' : 'rgba(13,13,13,.35)' }}>
-                Tu descuento acumulado
-              </div>
-              <div className="text-[32px] font-bold text-[#0D0D0D] tracking-tight leading-none">
-                +{totalDisc}%
-              </div>
-            </div>
-            {gross > 0 && totalDisc > 0 && (
-              <div className="rounded-[10px] px-3 py-2 text-center" style={{ background: 'rgba(29,158,117,.12)' }}>
-                <div className="text-[9px] font-bold text-[#1D9E75] uppercase tracking-[0.5px]">Ahorras</div>
-                <div className="text-[14px] font-bold text-[#1D9E75]">€{(gross * totalDisc / 100).toFixed(2)}/mes</div>
-              </div>
-            )}
-          </div>
-
-          {/* Two accrual pills */}
-          <div className="flex gap-2 mb-3">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-              style={bundleDisc > 0
-                ? { background: 'rgba(29,158,117,.12)', border: '1px solid rgba(29,158,117,.2)' }
-                : { background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.08)' }}>
-              <span className="text-[11px] font-bold" style={{ color: bundleDisc > 0 ? '#1D9E75' : 'rgba(13,13,13,.3)' }}>
-                +{bundleDisc}%
-              </span>
-              <span className="text-[11px]" style={{ color: bundleDisc > 0 ? 'rgba(29,158,117,.7)' : 'rgba(13,13,13,.25)' }}>
-                Multi-seguro
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-              style={loyaltyDisc > 0
-                ? { background: 'rgba(29,158,117,.12)', border: '1px solid rgba(29,158,117,.2)' }
-                : { background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.08)' }}>
-              <span className="text-[11px] font-bold" style={{ color: loyaltyDisc > 0 ? '#1D9E75' : 'rgba(13,13,13,.3)' }}>
-                +{loyaltyDisc}%
-              </span>
-              <span className="text-[11px]" style={{ color: loyaltyDisc > 0 ? 'rgba(29,158,117,.7)' : 'rgba(13,13,13,.25)' }}>
-                Fidelidad
-              </span>
-            </div>
-          </div>
-
-          {/* Next step hint */}
-          <div className="text-[11px]" style={{ color: 'rgba(13,13,13,.35)' }}>
-            {activeCount === 0
-              ? 'Activa 2 seguros → +3% multi-seguro · Mes 4 → +5% fidelidad'
-              : activeCount === 1
-              ? 'Añade 1 seguro más → +3% multi-seguro'
-              : nextTier
-              ? `Mes ${nextTier.months} → +${nextTier.disc}% fidelidad`
-              : '¡Descuento máximo conseguido!'}
-          </div>
-        </motion.div>
+          {activeCount > 0 && (
+            <motion.div key={netDisplay.toFixed(2)} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              className="text-[13px] font-semibold text-[#0D0D0D]">
+              €{netDisplay.toFixed(2)}<span className="text-[11px] font-normal text-[#0D0D0D]/40">/mes</span>
+            </motion.div>
+          )}
+        </div>
 
         {/* Insurance cards */}
         {PRODUCTS_DISPLAY.map(product => {
@@ -540,6 +457,46 @@ export default function HomePage() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Unified discount strip */}
+        <motion.div variants={fadeUp} className="rounded-[14px] px-4 py-3 mb-3 flex items-center gap-3"
+          style={{
+            background: 'var(--sand-card)',
+            border: totalDisc > 0 ? '1px solid rgba(29,158,117,.2)' : '1px solid rgba(13,13,13,.07)',
+          }}>
+          <div className="flex-1 min-w-0">
+            <div className="text-[10px] font-bold uppercase tracking-[0.8px] mb-1"
+              style={{ color: totalDisc > 0 ? '#1D9E75' : 'rgba(13,13,13,.3)' }}>
+              Tu descuento acumulado
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[18px] font-bold text-[#0D0D0D] leading-none">+{totalDisc}%</span>
+              <div className="flex gap-1.5">
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                  style={bundleDisc > 0
+                    ? { background: 'rgba(29,158,117,.12)', color: '#1D9E75', border: '1px solid rgba(29,158,117,.2)' }
+                    : { background: 'rgba(13,13,13,.05)', color: 'rgba(13,13,13,.3)', border: '1px solid rgba(13,13,13,.08)' }}>
+                  +{bundleDisc}% Multi
+                </span>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                  style={loyaltyDisc > 0
+                    ? { background: 'rgba(29,158,117,.12)', color: '#1D9E75', border: '1px solid rgba(29,158,117,.2)' }
+                    : { background: 'rgba(13,13,13,.05)', color: 'rgba(13,13,13,.3)', border: '1px solid rgba(13,13,13,.08)' }}>
+                  +{loyaltyDisc}% Fidelidad
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="text-[10px] text-right flex-shrink-0" style={{ color: 'rgba(13,13,13,.35)', maxWidth: 100 }}>
+            {activeCount === 0
+              ? '2 seguros → +3%'
+              : activeCount === 1
+              ? 'Añade 1 más → +3%'
+              : nextTier
+              ? `Mes ${nextTier.months} → +${nextTier.disc}%`
+              : '¡Máximo!'}
+          </div>
+        </motion.div>
 
         {/* Viaje add-on card */}
         <motion.div variants={fadeUp}
