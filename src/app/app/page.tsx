@@ -268,9 +268,9 @@ export default function HomePage() {
     if (id === 'home') {
       localStorage.setItem('daily_hogar_price', String(price))
     } else if (id === 'pet') {
-      const typeAns  = answers?.type || 'Perro'
-      const sizeAns  = answers?.size || ''
-      const mascLabel = sizeAns ? `${typeAns} ${sizeAns.toLowerCase()}` : typeAns
+      const typeAns  = answers?.species || 'Perro'
+      const sizeAns  = answers?.breed || ''
+      const mascLabel = sizeAns ? `${typeAns} · ${sizeAns.toLowerCase()}` : typeAns
       localStorage.setItem('daily_mascota_type', mascLabel)
       localStorage.setItem('daily_mascota_price', String(price))
     }
@@ -382,12 +382,17 @@ export default function HomePage() {
                     ) : (
                       <div className="text-[12px] text-[#0D0D0D]/40 mt-0.5">
                         {isOn ? (
-                          bundleDisc > 0 ? (
-                            <span>
-                              <span className="line-through text-[#0D0D0D]/20 mr-1">€{price.toFixed(2)}</span>
-                              <span style={{ color: '#1D9E75' }}>€{discPrice.toFixed(2)}/mes</span>
-                            </span>
-                          ) : `€${price.toFixed(2)}/mes`
+                          <>
+                            {bundleDisc > 0 ? (
+                              <span>
+                                <span className="line-through text-[#0D0D0D]/20 mr-1">€{price.toFixed(2)}</span>
+                                <span style={{ color: '#1D9E75' }}>€{discPrice.toFixed(2)}/mes</span>
+                              </span>
+                            ) : `€${price.toFixed(2)}/mes`}
+                            {product.id === 'pet' && mascotaType && (
+                              <div className="text-[11px] mt-0.5 text-[#0D0D0D]/35">{mascotaType}</div>
+                            )}
+                          </>
                         ) : <>
                             <span>Desde €{product.desde.toFixed(2)}/mes</span>
                             <div className="text-[11px] font-medium mt-0.5" style={{ color: '#1D9E75' }}>

@@ -1,4 +1,12 @@
 {
-  "java.import.exclusions": ["**/android/**", "**/node_modules/**"],
-  "gradle.nestedProjects": false
+  "java.import.exclusions": ["**/android/**", "**/ios/**", "**/node_modules/**"],
+  "java.autobuild.enabled": false,
+  "java.configuration.updateBuildConfiguration": "disabled",
+  "java.server.launchMode": "LightWeight",
+  "gradle.nestedProjects": false,
+  "files.watcherExclude": {
+    "**/android/**": true,
+    "**/ios/**": true,
+    "**/node_modules/**": true
+  }
 }

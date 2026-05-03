@@ -12,7 +12,7 @@ const TIMELINE_DEMO = [
   { day: 8,  date: '25 mar', title: 'Visita del perito',        desc: 'Daños inspeccionados y documentados',          owner: 'perito', status: 'done'    },
   { day: 12, date: '29 mar', title: 'Peritaje valorado',        desc: 'Daños valorados en €1.840',                    owner: 'mapfre', status: 'done'    },
   { day: 18, date: '4 abr',  title: 'En revisión con Mapfre',   desc: 'Daily hace seguimiento activo',                owner: 'mapfre', status: 'current' },
-  { day: 30, date: '17 abr', title: 'Resolución prometida',     desc: 'O Daily te devuelve un mes de cuota',          owner: 'daily',  status: 'pending' },
+  { day: 30, date: '17 abr', title: 'Respuesta prometida',       desc: 'O Daily te devuelve un mes de cuota',          owner: 'daily',  status: 'pending' },
 ]
 
 const OWNERS: Record<string, { label: string; color: string; bg: string }> = {
@@ -132,7 +132,7 @@ export default function ClaimsPage() {
           style={{ background: '#0D0D0D', border: '1px solid rgba(29,158,117,.15)' }}>
           <div className="text-[10px] font-bold text-[#1D9E75] uppercase tracking-[1px] mb-1">Promesa Daily</div>
           <div className="text-[16px] font-bold text-white leading-snug">
-            Resuelto en 30 días o te devolvemos un mes de prima
+            Respondido en 30 días o te devolvemos un mes de prima
           </div>
         </motion.div>
 
@@ -247,7 +247,7 @@ export default function ClaimsPage() {
                           style={{ background: 'rgba(13,13,13,.05)' }}>
                           <span>📊</span>
                           <span className="text-[11px] text-[#0D0D0D]/45 leading-relaxed">
-                            El <strong className="text-[#0D0D0D]/65">87% de siniestros como el tuyo</strong> se resuelven antes de 25 días.
+                            El <strong className="text-[#0D0D0D]/65">87% de siniestros como el tuyo</strong> se gestionan antes de 25 días.
                           </span>
                         </div>
 

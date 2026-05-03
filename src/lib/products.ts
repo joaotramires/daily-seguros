@@ -63,10 +63,10 @@ export const PRODUCTS: Product[] = [
       ]},
       // Body weight drives surgical costs, anaesthesia and medication dose
       { id: 'breed', label: '¿Cuál es su raza o tamaño?', options: [
-        { label: 'Raza pequeña',           desc: 'Chihuahua, Yorkshire, Pomerania…', multiplier: 0.82 },
-        { label: 'Raza mediana',           desc: 'Beagle, Cocker, Border Collie…',   multiplier: 1.0  },
-        { label: 'Raza grande',            desc: 'Labrador, Pastor, Boxer…',         multiplier: 1.24 },
-        { label: 'Raza gigante o exótica', desc: 'Mastín, Gran Danés, Persa…',       multiplier: 1.52 },
+        { label: 'Raza pequeña',           desc: 'Chihuahua, Yorkshire… · Siamés, Europeo…', multiplier: 0.82 },
+        { label: 'Raza mediana',           desc: 'Beagle, Cocker… · Persa, Ragdoll…',        multiplier: 1.0  },
+        { label: 'Raza grande',            desc: 'Labrador, Pastor… · Maine Coon, Noruego…', multiplier: 1.24 },
+        { label: 'Raza gigante o exótica', desc: 'Mastín, Gran Danés… · Savannah, Bengalí…', multiplier: 1.52 },
       ]},
       // Age is the strongest predictor of veterinary claims
       { id: 'age', label: '¿Qué edad tiene?', options: [
