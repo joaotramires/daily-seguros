@@ -88,7 +88,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         const email = session.user.email
         const name  = session.user.user_metadata?.full_name || session.user.user_metadata?.name || email
         try {
-          const res = await fetch('/api/login-customer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) })
+          const platform = isNative ? 'android' : 'web'
+          const res = await fetch('/api/login-customer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, platform }) })
           const d   = await res.json()
           let finalId = ''
           if (d.found) {
@@ -97,7 +98,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             setInitial(d.name[0].toUpperCase())
             finalId = d.customerId
           } else {
-            const r2 = await fetch('/api/register-customer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, city: 'Madrid' }) })
+            const r2 = await fetch('/api/register-customer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, city: 'Madrid', platform }) })
             const d2 = await r2.json()
             if (d2.customerId) {
               localStorage.setItem('customerId',   d2.customerId)

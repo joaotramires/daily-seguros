@@ -106,7 +106,7 @@ public class MainActivity extends BridgeActivity {
                     "      var res = await fetch('/api/login-customer', {" +
                     "        method: 'POST'," +
                     "        headers: {'Content-Type': 'application/json'}," +
-                    "        body: JSON.stringify({email: email})" +
+                    "        body: JSON.stringify({email: email, platform: 'android'})" +
                     "      });" +
                     "      var d = await res.json();" +
                     "      if (d.found) {" +
@@ -116,7 +116,7 @@ public class MainActivity extends BridgeActivity {
                     "        var r2 = await fetch('/api/register-customer', {" +
                     "          method: 'POST'," +
                     "          headers: {'Content-Type': 'application/json'}," +
-                    "          body: JSON.stringify({name: name, email: email, city: 'Madrid'})" +
+                    "          body: JSON.stringify({name: name, email: email, city: 'Madrid', platform: 'android'})" +
                     "        });" +
                     "        var d2 = await r2.json();" +
                     "        if (d2.customerId) {" +

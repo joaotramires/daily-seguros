@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Capacitor } from '@capacitor/core'
 import Sheet from '@/components/ui/Sheet'
 import { PRODUCTS, calcPrice, getBundleDiscount } from '@/lib/products'
 import { fadeUp, stagger, tapScale, scaleIn } from '@/lib/animations'
@@ -99,7 +100,7 @@ export default function SurveyModal({ productId, activeCount, onClose, onActivat
         const res  = await fetch('/api/register-customer', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: regName, email: regEmail, city: 'Madrid' }),
+          body: JSON.stringify({ name: regName, email: regEmail, city: 'Madrid', platform: Capacitor.isNativePlatform() ? 'android' : 'web' }),
         })
         const data = await res.json()
         if (data.customerId) {

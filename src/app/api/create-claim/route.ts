@@ -40,6 +40,7 @@ export async function POST(req: NextRequest) {
       policy_id: policyId || null,
       description,
       resolution_deadline: deadline.toISOString(),
+      ...(incidentDate ? { incident_date: incidentDate } : {}),
       ...(mediaUrls?.length ? { media_urls: mediaUrls } : {}),
     })
     .select('id')

@@ -19,7 +19,7 @@ export default function OnboardingPage() {
       const res = await fetch('/api/register-customer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, platform: isNative ? 'android' : 'web' }),
       })
       const data = await res.json()
       if (data.customerId) {
