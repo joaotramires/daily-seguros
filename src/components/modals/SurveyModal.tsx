@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Sheet from '@/components/ui/Sheet'
 import { PRODUCTS, calcPrice, getBundleDiscount } from '@/lib/products'
@@ -16,50 +16,66 @@ interface SurveyModalProps {
   onLoggedIn?: (name: string, customerId: string) => void
 }
 
-type Step = 'q1' | 'q2' | 'q3' | 'price' | 'payment' | 'processing' | 'success'
+type Phase = 'questions' | 'price' | 'payment' | 'processing' | 'success'
 
 export default function SurveyModal({ productId, activeCount, onClose, onActivated, customerName, isLoggedIn, onLoggedIn }: SurveyModalProps) {
   const product = PRODUCTS.find(p => p.id === productId)
-  const [step, setStep]           = useState<Step>('q1')
-  const [answers, setAnswers]     = useState<Record<string, string>>({})
-  const [loading, setLoading]     = useState(false)
+
+  const [qStep, setQStep]     = useState(0)
+  const [phase, setPhase]     = useState<Phase>('questions')
+  const [answers, setAnswers] = useState<Record<string, string>>({})
+  const [loading, setLoading] = useState(false)
   const [createdPolicyId, setCreatedPolicyId] = useState<string | undefined>()
-  const [regName, setRegName]     = useState('')
-  const [regEmail, setRegEmail]   = useState('')
+  const [regName, setRegName]   = useState('')
+  const [regEmail, setRegEmail] = useState('')
+
+  useEffect(() => {
+    if (productId) {
+      setQStep(0)
+      setPhase('questions')
+      setAnswers({})
+      setRegName('')
+      setRegEmail('')
+      setCreatedPolicyId(undefined)
+    }
+  }, [productId])
 
   if (!product) return null
 
-  const qIndex   = step === 'q1' ? 0 : step === 'q2' ? 1 : step === 'q3' ? 2 : -1
-  const currentQ = qIndex >= 0 ? product.questions[qIndex] : null
-  const steps: Step[] = product.questions.length === 3
-    ? ['q1', 'q2', 'q3', 'price', 'payment']
-    : ['q1', 'q2', 'price', 'payment']
+  const nQ       = product.questions.length
+  const currentQ = phase === 'questions' ? product.questions[qStep] : null
 
-  const stepIndex  = steps.indexOf(step)
   const basePrice  = calcPrice(product.id, answers)
   const bundleDisc = getBundleDiscount(activeCount + 1)
   const finalPrice = Math.round(basePrice * (1 - bundleDisc / 100) * 100) / 100
 
-  const needsReg = !isLoggedIn
-  const canPay   = !needsReg || (!!regName && !!regEmail)
+  const needsReg    = !isLoggedIn
+  const canPay      = !needsReg || (!!regName && !!regEmail)
   const displayName = regName || customerName || ''
+
+  // Progress: nQ segments for questions + 1 for price reveal
+  const progressTotal  = nQ + 1
+  const progressFilled = phase === 'questions' ? qStep : phase === 'price' ? nQ : progressTotal
 
   function selectOption(qId: string, label: string) {
     const newAnswers = { ...answers, [qId]: label }
     setAnswers(newAnswers)
     setTimeout(() => {
-      const nextSteps: Record<Step, Step> = {
-        q1: 'q2', q2: product!.questions.length === 3 ? 'q3' : 'price',
-        q3: 'price', price: 'payment', payment: 'processing', processing: 'success', success: 'success',
-      }
-      setStep(nextSteps[step])
+      if (qStep < nQ - 1) setQStep(q => q + 1)
+      else setPhase('price')
     }, 180)
+  }
+
+  function goBack() {
+    if (phase === 'payment') { setPhase('price'); return }
+    if (phase === 'price')   { setPhase('questions'); setQStep(nQ - 1); return }
+    if (qStep > 0)           { setQStep(q => q - 1) }
   }
 
   async function handlePay() {
     if (!product || !canPay) return
     setLoading(true)
-    setStep('processing')
+    setPhase('processing')
 
     if (process.env.NEXT_PUBLIC_STRIPE_ENABLED === 'true') {
       try {
@@ -76,7 +92,6 @@ export default function SurveyModal({ productId, activeCount, onClose, onActivat
       return
     }
 
-    // Register user if not already logged in
     let customerId = localStorage.getItem('customerId')
     if (!customerId && regName && regEmail) {
       try {
@@ -95,7 +110,6 @@ export default function SurveyModal({ productId, activeCount, onClose, onActivat
       } catch (e) { console.error(e) }
     }
 
-    // Mock flow — active until Stripe is enabled
     await new Promise(r => setTimeout(r, 1500))
     try {
       if (customerId) {
@@ -108,7 +122,7 @@ export default function SurveyModal({ productId, activeCount, onClose, onActivat
         if (data.policyId) setCreatedPolicyId(data.policyId)
       }
     } catch (e) { console.error(e) }
-    setStep('success')
+    setPhase('success')
     setLoading(false)
   }
 
@@ -117,14 +131,14 @@ export default function SurveyModal({ productId, activeCount, onClose, onActivat
     onClose()
   }
 
-  const totalSteps = steps.length
+  const showChrome = phase !== 'success' && phase !== 'processing'
 
   return (
-    <Sheet open={!!productId} onClose={step === 'success' ? handleDone : onClose}>
+    <Sheet open={!!productId} onClose={phase === 'success' ? handleDone : onClose}>
       <div className="px-5 pt-4">
 
         {/* Header */}
-        {step !== 'success' && step !== 'processing' && (
+        {showChrome && (
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-[9px] flex items-center justify-center text-[18px]"
@@ -134,31 +148,33 @@ export default function SurveyModal({ productId, activeCount, onClose, onActivat
               <div>
                 <div className="text-[14px] font-bold text-[#0D0D0D]">Activar {product.label}</div>
                 <div className="text-[11px] text-[#0D0D0D]/40">
-                  {currentQ ? `Pregunta ${qIndex + 1} de ${product.questions.length}` :
-                   step === 'price' ? 'Tu precio' : 'Pago'}
+                  {phase === 'questions'
+                    ? `Pregunta ${qStep + 1} de ${nQ}`
+                    : phase === 'price' ? 'Tu precio' : 'Confirmar pago'}
                 </div>
               </div>
             </div>
-            <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center text-[14px] text-[#0D0D0D]/40"
+            <button onClick={onClose}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-[14px] text-[#0D0D0D]/40"
               style={{ background: 'rgba(13,13,13,.07)' }}>✕</button>
           </div>
         )}
 
         {/* Progress bar */}
-        {step !== 'success' && step !== 'processing' && (
+        {showChrome && (
           <div className="flex gap-1 mb-5">
-            {steps.slice(0, totalSteps).map((s, i) => (
-              <div key={s} className="h-[3px] flex-1 rounded-full transition-all duration-300"
-                style={{ background: i <= stepIndex ? product.color : 'rgba(13,13,13,.1)' }} />
+            {Array.from({ length: progressTotal }).map((_, i) => (
+              <div key={i} className="h-[3px] flex-1 rounded-full transition-all duration-300"
+                style={{ background: i < progressFilled ? product.color : 'rgba(13,13,13,.1)' }} />
             ))}
           </div>
         )}
 
         <AnimatePresence mode="wait">
 
-          {/* Question steps */}
-          {currentQ && (
-            <motion.div key={step} variants={stagger} initial="hidden" animate="visible" exit={{ opacity: 0, x: -10 }}>
+          {/* Question step */}
+          {phase === 'questions' && currentQ && (
+            <motion.div key={`q${qStep}`} variants={stagger} initial="hidden" animate="visible" exit={{ opacity: 0, x: -10 }}>
               <motion.h3 variants={fadeUp} className="text-[20px] font-bold text-[#0D0D0D] mb-5 leading-snug tracking-tight">
                 {currentQ.label}
               </motion.h3>
@@ -178,9 +194,8 @@ export default function SurveyModal({ productId, activeCount, onClose, onActivat
                   </motion.button>
                 ))}
               </motion.div>
-              {qIndex > 0 && (
-                <button onClick={() => setStep(steps[stepIndex - 1])}
-                  className="w-full text-center py-3 text-[12px] text-[#0D0D0D]/35 mt-1">
+              {qStep > 0 && (
+                <button onClick={goBack} className="w-full text-center py-3 text-[12px] text-[#0D0D0D]/35 mt-1">
                   ← Volver
                 </button>
               )}
@@ -188,7 +203,7 @@ export default function SurveyModal({ productId, activeCount, onClose, onActivat
           )}
 
           {/* Price reveal */}
-          {step === 'price' && (
+          {phase === 'price' && (
             <motion.div key="price" variants={stagger} initial="hidden" animate="visible" className="text-center">
               <motion.div variants={fadeUp} className="text-[10px] font-bold text-[#0D0D0D]/40 uppercase tracking-[1px] mb-2">
                 Tu precio personalizado
@@ -208,24 +223,25 @@ export default function SurveyModal({ productId, activeCount, onClose, onActivat
                 style={{ background: 'rgba(13,13,13,.04)', border: '1px solid rgba(13,13,13,.08)' }}>
                 <div className="text-[10px] font-bold text-[#0D0D0D]/35 uppercase tracking-[0.8px] mb-2">Lo que has elegido</div>
                 {product.questions.map(q => (
-                  <div key={q.id} className="flex justify-between text-[12px] py-1">
-                    <span className="text-[#0D0D0D]/45">{q.label}</span>
-                    <span className="font-semibold text-[#0D0D0D]">{answers[q.id] || '—'}</span>
+                  <div key={q.id} className="flex justify-between text-[12px] py-1 gap-4">
+                    <span className="text-[#0D0D0D]/45 truncate">{q.label}</span>
+                    <span className="font-semibold text-[#0D0D0D] flex-shrink-0">{answers[q.id] || '—'}</span>
                   </div>
                 ))}
               </motion.div>
-              <motion.button variants={fadeUp} whileTap={tapScale} onClick={() => setStep('payment')}
+              <motion.button variants={fadeUp} whileTap={tapScale} onClick={() => setPhase('payment')}
                 className="w-full py-4 rounded-[13px] text-[15px] font-semibold text-white mb-2"
                 style={{ background: '#0D0D0D' }}>
                 Continuar al pago →
               </motion.button>
-              <button onClick={() => setStep(steps[stepIndex - 1])}
-                className="w-full text-[12px] text-[#0D0D0D]/35 py-2">← Cambiar respuestas</button>
+              <button onClick={goBack} className="w-full text-[12px] text-[#0D0D0D]/35 py-2">
+                ← Cambiar respuestas
+              </button>
             </motion.div>
           )}
 
           {/* Payment step */}
-          {step === 'payment' && (
+          {phase === 'payment' && (
             <motion.div key="payment" variants={stagger} initial="hidden" animate="visible">
               <motion.h3 variants={fadeUp} className="text-[20px] font-bold text-[#0D0D0D] mb-1 tracking-tight">
                 Confirma tu pago
@@ -238,14 +254,15 @@ export default function SurveyModal({ productId, activeCount, onClose, onActivat
                 style={{ background: '#0D0D0D' }}>
                 <div>
                   <div className="text-[10px] text-white/40 font-semibold uppercase tracking-[0.5px]">Pagas hoy</div>
-                  <div className="text-[11px] text-white/35 mt-1">{product.label} · {product.id === 'travel' ? 'Viaje único' : 'Mes 1'}</div>
+                  <div className="text-[11px] text-white/35 mt-1">
+                    {product.label} · {product.id === 'travel' ? 'Viaje único' : 'Mes 1'}
+                  </div>
                 </div>
                 <div className="text-[28px] font-bold tracking-tight" style={{ color: '#1D9E75' }}>
                   €{finalPrice.toFixed(2)}
                 </div>
               </motion.div>
 
-              {/* Registration fields (only when not logged in) */}
               {needsReg && (
                 <motion.div variants={fadeUp} className="mb-4">
                   <div className="text-[10px] font-bold text-[#0D0D0D]/40 uppercase tracking-[0.8px] mb-2">Tus datos</div>
@@ -260,7 +277,6 @@ export default function SurveyModal({ productId, activeCount, onClose, onActivat
                 </motion.div>
               )}
 
-              {/* Payment method rows */}
               <motion.div variants={stagger}>
                 {[
                   { icon: '💙', label: 'Bizum',     sub: '+34 600 000 000' },
@@ -283,14 +299,14 @@ export default function SurveyModal({ productId, activeCount, onClose, onActivat
               <div className="text-[11px] text-[#0D0D0D]/25 text-center mt-3">
                 Pago cifrado · Stripe · Cancela cuando quieras
               </div>
-              <button onClick={() => setStep('price')} className="w-full text-[12px] text-[#0D0D0D]/35 py-2.5">
+              <button onClick={goBack} className="w-full text-[12px] text-[#0D0D0D]/35 py-2.5">
                 ← Volver al precio
               </button>
             </motion.div>
           )}
 
           {/* Processing */}
-          {step === 'processing' && (
+          {phase === 'processing' && (
             <motion.div key="proc" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">
               <div className="w-9 h-9 border-[3px] border-[#0D0D0D]/10 border-t-[#1D9E75] rounded-full animate-spin mx-auto mb-4" />
               <p className="text-[13px] text-[#0D0D0D]/40">Procesando pago…</p>
@@ -298,19 +314,20 @@ export default function SurveyModal({ productId, activeCount, onClose, onActivat
           )}
 
           {/* Success */}
-          {step === 'success' && (
+          {phase === 'success' && (
             <motion.div key="ok" variants={stagger} initial="hidden" animate="visible" className="text-center pt-2 pb-2">
               <motion.div variants={scaleIn}
                 className="w-[68px] h-[68px] rounded-full bg-[#1D9E75] flex items-center justify-center text-[28px] text-white mx-auto mb-4"
                 style={{ boxShadow: '0 8px 24px rgba(29,158,117,.35)' }}>
                 ✓
               </motion.div>
-              <motion.h3 variants={fadeUp} className="text-[26px] font-bold text-[#0D0D0D] tracking-tight mb-1">¡Listo!</motion.h3>
+              <motion.h3 variants={fadeUp} className="text-[26px] font-bold text-[#0D0D0D] tracking-tight mb-1">
+                ¡Listo!
+              </motion.h3>
               <motion.p variants={fadeUp} className="text-[13px] text-[#0D0D0D]/45 mb-5 leading-relaxed">
                 Tu seguro de {product.label.toLowerCase()}<br />está activo desde hoy.
               </motion.p>
 
-              {/* WhatsApp-style confirmation bubble */}
               <motion.div variants={fadeUp} className="rounded-[14px] p-4 mb-4 text-left"
                 style={{ background: '#e8f5e9', border: '1px solid rgba(13,13,13,.06)' }}>
                 <div className="flex items-center gap-2.5 mb-3 pb-3 border-b border-black/[0.07]">
