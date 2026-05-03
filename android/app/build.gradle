@@ -1,5 +1,13 @@
 apply plugin: 'com.android.application'
 
+// Load signing credentials from keystore.properties (not committed to git).
+// Create android/keystore.properties with: storeFile, storePassword, keyAlias, keyPassword
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
     namespace = "com.daily.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -20,11 +28,29 @@ android {
         sourceCompatibility JavaVersion.VERSION_21
         targetCompatibility JavaVersion.VERSION_21
     }
+    signingConfigs {
+        release {
+            // Values filled from keystore.properties when present
+        }
+    }
     buildTypes {
         release {
-            minifyEnabled false
+            if (keystorePropertiesFile.exists()) {
+                signingConfig signingConfigs.release
+            }
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+    }
+}
+
+// Apply signing credentials when keystore.properties is present
+if (keystorePropertiesFile.exists()) {
+    android.signingConfigs.release {
+        storeFile     file(keystoreProperties['storeFile'])
+        storePassword keystoreProperties['storePassword']
+        keyAlias      keystoreProperties['keyAlias']
+        keyPassword   keystoreProperties['keyPassword']
     }
 }
 

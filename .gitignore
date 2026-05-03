@@ -9,6 +9,12 @@ node_modules/
 android/.gradle/
 android/app/build/
 android/build/
+
+# Android release signing — NEVER commit these
+keystore.properties
+*.keystore
+*.jks
+android/app/google-services.json
 ios/App/Pods/
 ios/App/App.xcworkspace/xcuserdata/
 ios/.DS_Store

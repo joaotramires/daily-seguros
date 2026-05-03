@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Sheet from '@/components/ui/Sheet'
 import { tapScale } from '@/lib/animations'
 import { useIsNative } from '@/lib/useIsNative'
+import { createClient } from '@/lib/supabase'
 
 const NAV: { path: string; label: string; icon: React.ReactNode }[] = [
   {
@@ -59,6 +60,36 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const storedName = localStorage.getItem('customerName') || ''
     if (storedName) setInitial(storedName[0].toUpperCase())
+
+    // Bridge Supabase OAuth sessions (Google Sign-In) to the app's customer system.
+    // Fires after the OAuth redirect returns and Supabase restores the session.
+    const supabase = createClient()
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user?.email && !localStorage.getItem('customerId')) {
+        const email = session.user.email
+        const name  = session.user.user_metadata?.full_name || session.user.user_metadata?.name || email
+        try {
+          const res = await fetch('/api/login-customer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) })
+          const d   = await res.json()
+          if (d.found) {
+            localStorage.setItem('customerId',   d.customerId)
+            localStorage.setItem('customerName', d.name)
+            setInitial(d.name[0].toUpperCase())
+            window.location.reload()
+          } else {
+            const r2 = await fetch('/api/register-customer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, city: 'Madrid' }) })
+            const d2 = await r2.json()
+            if (d2.customerId) {
+              localStorage.setItem('customerId',   d2.customerId)
+              localStorage.setItem('customerName', name)
+              setInitial(name[0].toUpperCase())
+              window.location.reload()
+            }
+          }
+        } catch (e) { console.error('OAuth bridge error', e) }
+      }
+    })
+    return () => subscription.unsubscribe()
   }, [])
 
   function handleAvatarClick() {
@@ -87,6 +118,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       }
     } catch (e) { console.error(e) }
     setAuthLoading(false)
+  }
+
+  async function handleGoogleSignIn() {
+    const supabase = createClient()
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + '/app' },
+    })
   }
 
   async function handleRegister() {
@@ -238,7 +277,25 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <AnimatePresence mode="wait">
             {step === 'email' && (
               <motion.div key="email" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <p className="text-[13px] text-[#0D0D0D]/45 mb-5 mt-1">Introduce tu email y continuamos.</p>
+                <p className="text-[13px] text-[#0D0D0D]/45 mb-4 mt-1">Accede o crea tu cuenta en segundos.</p>
+                {/* Google Sign-In */}
+                <button onClick={handleGoogleSignIn}
+                  className="w-full py-3 rounded-[13px] text-[14px] font-semibold text-[#0D0D0D] mb-3 flex items-center justify-center gap-2.5 border"
+                  style={{ background: 'white', borderColor: 'rgba(13,13,13,.15)' }}>
+                  <svg width="18" height="18" viewBox="0 0 48 48">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                  </svg>
+                  Continuar con Google
+                </button>
+                {/* Divider */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex-1 h-px bg-[#0D0D0D]/10" />
+                  <span className="text-[11px] text-[#0D0D0D]/30">o con email</span>
+                  <div className="flex-1 h-px bg-[#0D0D0D]/10" />
+                </div>
                 <label className="block text-[10px] font-bold text-[#0D0D0D]/40 uppercase tracking-[0.8px] mb-1.5">Email</label>
                 <input type="email" placeholder="ana@email.com" value={email} onChange={e => setEmail(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleEmailSubmit()}
