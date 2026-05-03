@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2732 2732">
+  <!-- Background: sand -->
+  <rect width="2732" height="2732" fill="#F5F0E8"/>
+  <!-- Centered icon -->
+  <g transform="translate(866, 866)">
+    <rect width="1000" height="1000" rx="220" fill="#0D0D0D"/>
+    <path d="M500 175 L700 263 L700 475 C700 598 615 703 500 746 C385 703 300 598 300 475 L300 263 Z"
+          fill="none" stroke="#1D9E75" stroke-width="34" stroke-linejoin="round"/>
+    <text x="500" y="568" font-family="-apple-system, BlinkMacSystemFont, Helvetica Neue, sans-serif"
+          font-size="234" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="-8">d</text>
+  </g>
+  <!-- Wordmark below -->
+  <text x="1366" y="1970" font-family="-apple-system, BlinkMacSystemFont, Helvetica Neue, sans-serif"
+        font-size="120" font-weight="700" fill="#0D0D0D" text-anchor="middle" letter-spacing="-4">daily</text>
+</svg>

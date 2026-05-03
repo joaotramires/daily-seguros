@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="230" fill="#0D0D0D"/>
+  <!-- Shield shape -->
+  <path d="M512 180 L720 270 L720 490 C720 620 630 730 512 775 C394 730 304 620 304 490 L304 270 Z"
+        fill="none" stroke="#1D9E75" stroke-width="36" stroke-linejoin="round"/>
+  <!-- "d" letterform inside shield -->
+  <text x="512" y="580" font-family="-apple-system, BlinkMacSystemFont, Helvetica Neue, sans-serif"
+        font-size="240" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="-8">d</text>
+</svg>

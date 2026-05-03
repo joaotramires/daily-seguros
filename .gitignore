@@ -4,3 +4,13 @@ node_modules/
 .env
 .env.local
 .env*.local
+
+# Capacitor build artifacts (keep android/ and ios/ project folders)
+android/.gradle/
+android/app/build/
+android/build/
+ios/App/Pods/
+ios/App/App.xcworkspace/xcuserdata/
+ios/.DS_Store
+dist/
+out/
