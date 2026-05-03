@@ -83,18 +83,45 @@ public class MainActivity extends BridgeActivity {
         String css = ".phone-frame { width: 100vw !important; height: 100vh !important; max-width: none !important; border: none !important; margin: 0 !important; border-radius: 0 !important; background: #F5F0E8 !important; } " +
                      ".phone-frame > div:has(.bg-black.rounded-full) { display: none !important; } " +
                      ".phone-frame > div:first-child { display: none !important; }";
-        
-        // JS to intercept the "Entrar" button click BEFORE it reaches the web handlers
+
         String js = "(function() {" +
                     "  var style = document.createElement('style');" +
                     "  style.innerHTML = '" + css + "';" +
                     "  document.head.appendChild(style);" +
-                    "  " +
+
+                    // Bridge: links a Supabase Auth user (email) to the app's customerId in localStorage.
+                    // Called after Google sign-in completes on the native side.
+                    "  window.__dailyPostAuth = async function(email, name) {" +
+                    "    try {" +
+                    "      var res = await fetch('/api/login-customer', {" +
+                    "        method: 'POST'," +
+                    "        headers: {'Content-Type': 'application/json'}," +
+                    "        body: JSON.stringify({email: email})" +
+                    "      });" +
+                    "      var d = await res.json();" +
+                    "      if (d.found) {" +
+                    "        localStorage.setItem('customerId', d.customerId);" +
+                    "        localStorage.setItem('customerName', d.name);" +
+                    "      } else {" +
+                    "        var r2 = await fetch('/api/register-customer', {" +
+                    "          method: 'POST'," +
+                    "          headers: {'Content-Type': 'application/json'}," +
+                    "          body: JSON.stringify({name: name, email: email, city: 'Madrid'})" +
+                    "        });" +
+                    "        var d2 = await r2.json();" +
+                    "        if (d2.customerId) {" +
+                    "          localStorage.setItem('customerId', d2.customerId);" +
+                    "          localStorage.setItem('customerName', name);" +
+                    "        }" +
+                    "      }" +
+                    "      window.location.reload();" +
+                    "    } catch(e) { console.error('dailyPostAuth error', e); }" +
+                    "  };" +
+
                     "  function hijack() {" +
                     "    var btns = Array.from(document.querySelectorAll('button'));" +
                     "    var loginBtn = btns.find(b => b.textContent.toLowerCase().includes('entrar'));" +
                     "    if (loginBtn && !loginBtn.hijacked) {" +
-                    "      /* Use Capture phase (true) to intercept before React event delegation */" +
                     "      loginBtn.addEventListener('click', function(e) {" +
                     "        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();" +
                     "        window.android.showAuth();" +
@@ -103,8 +130,7 @@ public class MainActivity extends BridgeActivity {
                     "    }" +
                     "  }" +
                     "  setInterval(hijack, 500);" +
-                    "  " +
-                    "  /* Pre-load Supabase library for auth callbacks if missing */" +
+
                     "  if (!window.supabase) {" +
                     "    var script = document.createElement('script');" +
                     "    script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';" +
@@ -114,7 +140,7 @@ public class MainActivity extends BridgeActivity {
                     "    document.head.appendChild(script);" +
                     "  }" +
                     "})();";
-        
+
         view.evaluateJavascript(js, null);
     }
 
@@ -150,14 +176,20 @@ public class MainActivity extends BridgeActivity {
         try {
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
             String idToken = account.getIdToken();
-            
-            // Pass the Google ID Token to Supabase via JavaScript
-            String js = "if(window.supabase) { " +
+            String email = account.getEmail() != null ? account.getEmail().replace("'", "\\'") : "";
+            String name  = account.getDisplayName() != null ? account.getDisplayName().replace("'", "\\'") : email;
+
+            // 1. Authenticate with Supabase Auth using the Google ID token
+            // 2. Then bridge to the app's customer system via __dailyPostAuth
+            String js = "if(window.supabase) {" +
                         "  window.supabase.auth.signInWithIdToken({ provider: 'google', token: '" + idToken + "' })" +
-                        "    .then(() => window.location.reload());" +
+                        "    .then(function() {" +
+                        "      if (window.__dailyPostAuth) window.__dailyPostAuth('" + email + "', '" + name + "');" +
+                        "      else window.location.reload();" +
+                        "    });" +
                         "}";
             webView.evaluateJavascript(js, null);
-            
+
             authOverlay.setVisibility(View.GONE);
             Toast.makeText(this, "Bienvenido " + account.getDisplayName(), Toast.LENGTH_SHORT).show();
         } catch (ApiException e) {

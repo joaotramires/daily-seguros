@@ -123,11 +123,17 @@ export default function HomePage() {
           const sorted = [...data.policies].sort((a: { created_at: string }, b: { created_at: string }) =>
             new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
           )
-          sorted.forEach((p: { id: string; product: string; monthly_premium: number }) => {
+          sorted.forEach((p: { id: string; product: string; monthly_premium: number; answers?: Record<string, string> }) => {
             if (p.product === 'home' || p.product === 'pet') {
               newActive[p.product as 'home' | 'pet'] = true
               newIds[p.product] = p.id
               newPrices[p.product as 'home' | 'pet'] = Number(p.monthly_premium)
+              if (p.product === 'pet' && p.answers?.species) {
+                const breed = p.answers.breed || ''
+                const label = breed ? `${p.answers.species} · ${breed.toLowerCase()}` : p.answers.species
+                setMascotaType(label)
+                localStorage.setItem('daily_mascota_type', label)
+              }
             }
           })
           setActive(newActive)
