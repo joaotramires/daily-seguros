@@ -347,21 +347,27 @@ export default function HomePage() {
               style={{
                 borderRadius: 14,
                 border: isCancelling
-                  ? '1px solid rgba(245,158,11,.3)'
-                  : `1px solid ${isOn ? product.color : 'rgba(13,13,13,.08)'}`,
-                borderLeft: isCancelling ? '3px solid #F59E0B' : undefined,
-                background: isCancelling
-                  ? 'rgba(245,158,11,.04)'
+                  ? '1px solid rgba(245,158,11,.35)'
                   : isOn
-                    ? `color-mix(in srgb,${product.color} 6%,var(--sand-card))`
-                    : 'var(--sand-card)',
+                    ? '1px solid rgba(29,158,117,.35)'
+                    : '1px solid rgba(13,13,13,.07)',
+                borderLeft: isCancelling
+                  ? '3px solid #F59E0B'
+                  : isOn
+                    ? '3px solid #1D9E75'
+                    : undefined,
+                background: isCancelling
+                  ? 'rgba(245,158,11,.05)'
+                  : isOn
+                    ? 'rgba(29,158,117,.05)'
+                    : 'rgba(13,13,13,.02)',
               }}
               onClick={isCancelling ? () => handleToggle(product.id) : undefined}>
 
               <div className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3.5 flex-1">
                   <div className="w-[42px] h-[42px] rounded-[11px] flex items-center justify-center text-[20px] flex-shrink-0 relative"
-                    style={{ background: isCancelling ? 'rgba(245,158,11,.12)' : isOn ? `color-mix(in srgb,${product.color} 15%,var(--sand-card))` : 'rgba(13,13,13,.06)' }}>
+                    style={{ background: isCancelling ? 'rgba(245,158,11,.14)' : isOn ? 'rgba(29,158,117,.14)' : 'rgba(13,13,13,.06)' }}>
                     {product.icon}
                     {chipSaved && product.id === 'pet' && (
                       <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#1D9E75] flex items-center justify-center text-[8px] text-white font-bold">✓</div>
@@ -379,7 +385,7 @@ export default function HomePage() {
                           bundleDisc > 0 ? (
                             <span>
                               <span className="line-through text-[#0D0D0D]/20 mr-1">€{price.toFixed(2)}</span>
-                              <span style={{ color: product.color }}>€{discPrice.toFixed(2)}/mes</span>
+                              <span style={{ color: '#1D9E75' }}>€{discPrice.toFixed(2)}/mes</span>
                             </span>
                           ) : `€${price.toFixed(2)}/mes`
                         ) : <>
@@ -401,7 +407,7 @@ export default function HomePage() {
                 {isLoading ? (
                   <div className="w-6 h-6 border-2 border-[#0D0D0D]/10 border-t-[#1D9E75] rounded-full animate-spin" />
                 ) : (
-                  <Toggle checked={isOn && !isCancelling} onChange={() => !isCancelling && handleToggle(product.id)} color={product.color} />
+                  <Toggle checked={isOn && !isCancelling} onChange={() => !isCancelling && handleToggle(product.id)} color="#1D9E75" />
                 )}
               </div>
 
