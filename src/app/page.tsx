@@ -1,12 +1,19 @@
 'use client'
+import { useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { stagger, fadeUp, tapScale } from '@/lib/animations'
 import { useIsNative } from '@/lib/useIsNative'
 
-export default function LandingPage() {
-  const router = useRouter()
+function LandingContent() {
+  const router   = useRouter()
   const isNative = useIsNative()
+  const params   = useSearchParams()
+
+  useEffect(() => {
+    const ref = params.get('ref')
+    if (ref) localStorage.setItem('daily_referral_code', ref)
+  }, [params])
 
   return (
     <div className="phone-frame" style={{ background: '#111' }}>
@@ -91,7 +98,7 @@ export default function LandingPage() {
         </motion.div>
       </div>
 
-      {/* Trust bar — dark continuation */}
+      {/* Trust bar  — dark continuation */}
       <div
         className="flex-shrink-0 px-7 py-4 border-t border-white/[0.06]"
         style={{ background: 'linear-gradient(160deg,#060907,#040604)' }}
@@ -118,4 +125,9 @@ export default function LandingPage() {
       </div>
     </div>
   )
+}
+
+import { Suspense } from 'react'
+export default function LandingPage() {
+  return <Suspense><LandingContent /></Suspense>
 }

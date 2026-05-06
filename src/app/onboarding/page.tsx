@@ -1,34 +1,49 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { motion } from 'framer-motion'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { fadeUp, stagger, tapScale } from '@/lib/animations'
 import { useIsNative } from '@/lib/useIsNative'
 
-export default function OnboardingPage() {
-  const router = useRouter()
+function OnboardingForm() {
+  const router   = useRouter()
   const isNative = useIsNative()
-  const [form, setForm] = useState({ name: '', email: '', phone: '', city: 'Madrid' })
+  const params   = useSearchParams()
+
+  const [form, setForm] = useState({
+    name: '', email: '', phone: '', city: 'Madrid',
+    consent_gdpr: false, consent_marketing: false,
+  })
+  const [referralCode, setReferralCode] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const set = (k: keyof typeof form, v: string) => setForm(f => ({ ...f, [k]: v }))
+  useEffect(() => {
+    const ref = params.get('ref') || localStorage.getItem('daily_referral_code') || ''
+    if (ref) { setReferralCode(ref); localStorage.setItem('daily_referral_code', ref) }
+  }, [params])
+
+  const set = (k: keyof typeof form, v: string | boolean) => setForm(f => ({ ...f, [k]: v }))
 
   async function handleSubmit() {
+    if (!form.consent_gdpr) return
     setLoading(true)
     try {
       const res = await fetch('/api/register-customer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, platform: isNative ? 'android' : 'web' }),
+        body: JSON.stringify({
+          ...form,
+          platform:    isNative ? 'android' : 'web',
+          referred_by: referralCode || undefined,
+        }),
       })
       const data = await res.json()
       if (data.customerId) {
         localStorage.setItem('customerId', data.customerId)
         localStorage.setItem('customerName', form.name)
+        localStorage.removeItem('daily_referral_code')
       }
-    } catch (e) {
-      console.error(e)
-    }
+    } catch (e) { console.error(e) }
     router.push('/app')
   }
 
@@ -64,10 +79,16 @@ export default function OnboardingPage() {
             <motion.p variants={fadeUp} className="text-[13px] text-[#0D0D0D]/45 mb-6">
               30 segundos. Solo una vez.
             </motion.p>
+            {referralCode && (
+              <motion.div variants={fadeUp} className="mb-4 rounded-[11px] px-4 py-3 text-[12px] font-semibold"
+                style={{ background: 'rgba(29,158,117,.1)', color: '#1D9E75' }}>
+                🎁 Te invitó un amigo · código {referralCode.toUpperCase()}
+              </motion.div>
+            )}
             <motion.div variants={stagger}>
               {[
-                { label: 'Tu nombre', key: 'name', placeholder: 'Ana García', type: 'text' },
-                { label: 'Email', key: 'email', placeholder: 'ana@email.com', type: 'email' },
+                { label: 'Tu nombre', key: 'name',  placeholder: 'Ana García',        type: 'text'  },
+                { label: 'Email',     key: 'email', placeholder: 'ana@email.com',     type: 'email' },
                 { label: 'Móvil (WhatsApp)', key: 'phone', placeholder: '+34 600 000 000', type: 'tel' },
               ].map(f => (
                 <motion.div key={f.key} variants={fadeUp} className="mb-4">
@@ -77,19 +98,41 @@ export default function OnboardingPage() {
                   <input
                     type={f.type}
                     placeholder={f.placeholder}
-                    value={form[f.key as keyof typeof form]}
+                    value={form[f.key as 'name' | 'email' | 'phone']}
                     onChange={e => set(f.key as keyof typeof form, e.target.value)}
                     className="w-full px-4 py-3 rounded-[11px] text-[14px] text-[#0D0D0D]"
                     style={{ background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.12)' }}
                   />
                 </motion.div>
               ))}
+
+              {/* GDPR consent */}
+              <motion.div variants={fadeUp} className="mb-3">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input type="checkbox" checked={form.consent_gdpr}
+                    onChange={e => set('consent_gdpr', e.target.checked)}
+                    className="mt-0.5 flex-shrink-0 accent-[#1D9E75]" />
+                  <span className="text-[12px] text-[#0D0D0D]/60 leading-relaxed">
+                    He leído y acepto la <strong className="text-[#0D0D0D]/80">Política de Privacidad</strong> y el tratamiento de mis datos para gestionar mi seguro. *
+                  </span>
+                </label>
+              </motion.div>
+              <motion.div variants={fadeUp} className="mb-5">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input type="checkbox" checked={form.consent_marketing}
+                    onChange={e => set('consent_marketing', e.target.checked)}
+                    className="mt-0.5 flex-shrink-0 accent-[#1D9E75]" />
+                  <span className="text-[12px] text-[#0D0D0D]/60 leading-relaxed">
+                    Acepto recibir ofertas y comunicaciones de Daily. (Opcional)
+                  </span>
+                </label>
+              </motion.div>
+
               <motion.button variants={fadeUp} whileTap={tapScale}
                 onClick={handleSubmit}
-                disabled={!form.name || !form.email || loading}
+                disabled={!form.name || !form.email || !form.consent_gdpr || loading}
                 className="w-full py-4 rounded-[13px] text-[15px] font-semibold text-white mt-2 disabled:opacity-40"
-                style={{ background: '#0D0D0D' }}
-              >
+                style={{ background: '#0D0D0D' }}>
                 {loading ? 'Guardando…' : 'Entrar →'}
               </motion.button>
             </motion.div>
@@ -97,5 +140,13 @@ export default function OnboardingPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense>
+      <OnboardingForm />
+    </Suspense>
   )
 }

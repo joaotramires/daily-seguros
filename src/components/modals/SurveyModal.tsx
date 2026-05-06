@@ -100,7 +100,7 @@ export default function SurveyModal({ productId, activeCount, onClose, onActivat
         const res  = await fetch('/api/register-customer', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: regName, email: regEmail, city: 'Madrid', platform: Capacitor.isNativePlatform() ? 'android' : 'web' }),
+          body: JSON.stringify({ name: regName, email: regEmail, city: 'Madrid', platform: Capacitor.isNativePlatform() ? 'android' : 'web', consent_gdpr: true, referred_by: localStorage.getItem('daily_referral_code') || undefined }),
         })
         const data = await res.json()
         if (data.customerId) {

@@ -44,5 +44,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  // Mark referral as converted on customer's first policy
+  const { data: customer } = await supabase
+    .from('customers')
+    .select('email, referred_by')
+    .eq('id', customerId)
+    .single()
+
+  if (customer?.referred_by && customer.email) {
+    await supabase
+      .from('referrals')
+      .update({ converted: true, converted_at: new Date().toISOString() })
+      .eq('referred_email', customer.email)
+      .eq('converted', false)
+  }
+
   return NextResponse.json({ policyId: data.id })
 }

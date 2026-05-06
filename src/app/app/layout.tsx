@@ -52,11 +52,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [initial, setInitial]         = useState('')
   const [showAuth, setShowAuth]       = useState(false)
   const [email, setEmail]             = useState('')
-  const [name, setName]               = useState('')
-  const [phone, setPhone]             = useState('')
-  const [step, setStep]               = useState<'email' | 'register' | 'loading'>('email')
-  const [authLoading, setAuthLoading] = useState(false)
-  const [mariaOpen, setMariaOpen]     = useState(false)
+  const [name, setName]                         = useState('')
+  const [phone, setPhone]                       = useState('')
+  const [step, setStep]                         = useState<'email' | 'register' | 'loading'>('email')
+  const [authLoading, setAuthLoading]           = useState(false)
+  const [mariaOpen, setMariaOpen]               = useState(false)
+  const [consentGdpr, setConsentGdpr]           = useState(false)
+  const [consentMarketing, setConsentMarketing] = useState(false)
 
   useEffect(() => {
     const storedName = localStorage.getItem('customerName') || ''
@@ -98,7 +100,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             setInitial(d.name[0].toUpperCase())
             finalId = d.customerId
           } else {
-            const r2 = await fetch('/api/register-customer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, city: 'Madrid', platform }) })
+            const referred_by = localStorage.getItem('daily_referral_code') || undefined
+            const r2 = await fetch('/api/register-customer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, city: 'Madrid', platform, consent_gdpr: true, referred_by }) })
             const d2 = await r2.json()
             if (d2.customerId) {
               localStorage.setItem('customerId',   d2.customerId)
@@ -132,6 +135,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   function closeAuth() {
     setShowAuth(false); setEmail(''); setName(''); setPhone(''); setStep('email')
+    setConsentGdpr(false); setConsentMarketing(false)
   }
 
   async function handleEmailSubmit() {
@@ -162,14 +166,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   async function handleRegister() {
-    if (!name.trim()) return
+    if (!name.trim() || !consentGdpr) return
     setAuthLoading(true)
     try {
-      const res  = await fetch('/api/register-customer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, phone, city: 'Madrid' }) })
+      const referred_by = localStorage.getItem('daily_referral_code') || undefined
+      const res  = await fetch('/api/register-customer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, phone, city: 'Madrid', platform: isNative ? 'android' : 'web', consent_gdpr: consentGdpr, consent_marketing: consentMarketing, referred_by }) })
       const data = await res.json()
       if (data.customerId) {
         localStorage.setItem('customerId', data.customerId)
         localStorage.setItem('customerName', name)
+        localStorage.removeItem('daily_referral_code')
         setInitial(name[0].toUpperCase())
         closeAuth()
         window.location.reload()
@@ -356,8 +362,26 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       style={{ background: 'rgba(13,13,13,.05)', border: '1px solid rgba(13,13,13,.12)' }} />
                   </div>
                 ))}
+                <div className="mb-3">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" checked={consentGdpr} onChange={e => setConsentGdpr(e.target.checked)}
+                      className="mt-0.5 flex-shrink-0 accent-[#1D9E75]" />
+                    <span className="text-[12px] text-[#0D0D0D]/55 leading-relaxed">
+                      Acepto la <strong className="text-[#0D0D0D]/70">Política de Privacidad</strong> y el tratamiento de mis datos. *
+                    </span>
+                  </label>
+                </div>
+                <div className="mb-4">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" checked={consentMarketing} onChange={e => setConsentMarketing(e.target.checked)}
+                      className="mt-0.5 flex-shrink-0 accent-[#1D9E75]" />
+                    <span className="text-[12px] text-[#0D0D0D]/55 leading-relaxed">
+                      Acepto recibir ofertas de Daily. (Opcional)
+                    </span>
+                  </label>
+                </div>
                 <motion.button whileTap={tapScale} onClick={handleRegister}
-                  disabled={!name.trim() || authLoading}
+                  disabled={!name.trim() || !consentGdpr || authLoading}
                   className="w-full py-4 rounded-[13px] text-[15px] font-semibold text-white mt-2 disabled:opacity-40"
                   style={{ background: '#0D0D0D' }}>
                   {authLoading ? 'Guardando…' : 'Crear cuenta →'}
