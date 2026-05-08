@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
       .from('policies')
       .select('starts_at')
       .eq('id', policyId)
+      .eq('customer_id', customerId)
       .single()
     if (policy && new Date(incidentDate) < new Date(policy.starts_at)) {
       const formatted = new Date(policy.starts_at).toLocaleDateString('es-ES', {

@@ -9,6 +9,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing customer id' }, { status: 400 })
   }
 
+  // Whitelist: only safe profile fields can be updated via this route
+  const ALLOWED = ['name', 'phone', 'city', 'fcm_token']
+  const safeUpdates = Object.fromEntries(
+    Object.entries(updates).filter(([k]) => ALLOWED.includes(k))
+  )
+  if (Object.keys(safeUpdates).length === 0) {
+    return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
+  }
+
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -16,7 +25,7 @@ export async function POST(req: NextRequest) {
 
   const { error } = await supabase
     .from('customers')
-    .update(updates)
+    .update(safeUpdates)
     .eq('id', id)
 
   if (error) {

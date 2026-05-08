@@ -96,10 +96,11 @@ export default function AccountPage() {
   }
 
   async function deletePm(pmId: string) {
+    const customerId = localStorage.getItem('customerId')
     await fetch('/api/payment-method', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pmId }),
+      body: JSON.stringify({ pmId, customerId }),
     })
     setPms(prev => prev.filter(p => p.id !== pmId))
   }

@@ -38,20 +38,44 @@ export async function PATCH(req: NextRequest) {
   }
 
   const supabase = getSupabase()
+
+  // Verify the target payment method belongs to this customer before setting default
+  const { data: pm } = await supabase
+    .from('payment_methods')
+    .select('customer_id')
+    .eq('id', pmId)
+    .single()
+
+  if (!pm || pm.customer_id !== customerId) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   await supabase.from('payment_methods').update({ is_default: false }).eq('customer_id', customerId)
-  await supabase.from('payment_methods').update({ is_default: true }).eq('id', pmId)
+  await supabase.from('payment_methods').update({ is_default: true }).eq('id', pmId).eq('customer_id', customerId)
 
   return NextResponse.json({ ok: true })
 }
 
 export async function DELETE(req: NextRequest) {
-  const { pmId } = await req.json()
+  const { pmId, customerId } = await req.json()
 
-  if (!pmId) {
-    return NextResponse.json({ error: 'Missing pmId' }, { status: 400 })
+  if (!pmId || !customerId) {
+    return NextResponse.json({ error: 'Missing pmId or customerId' }, { status: 400 })
   }
 
   const supabase = getSupabase()
+
+  // Verify ownership before deleting
+  const { data: pm } = await supabase
+    .from('payment_methods')
+    .select('customer_id')
+    .eq('id', pmId)
+    .single()
+
+  if (!pm || pm.customer_id !== customerId) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   const { error } = await supabase.from('payment_methods').delete().eq('id', pmId)
 
   if (error) {

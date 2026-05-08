@@ -269,6 +269,7 @@ export default function HomePage() {
     if (id === 'travel') {
       setTravelActive(true)
       localStorage.setItem('daily_travel_active', 'true')
+      if (policyId) setPolicyIds(p => ({ ...p, travel: policyId }))
       return
     }
     if (id === 'home') {

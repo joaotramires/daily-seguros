@@ -27,25 +27,84 @@ function daysSince(date: string) {
 }
 
 export default function DailyInternalPage() {
-  const [claims, setClaims] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState<string | null>(null)
+  const [adminKey, setAdminKey]   = useState<string | null>(null)
+  const [keyInput, setKeyInput]   = useState('')
+  const [authError, setAuthError] = useState(false)
+  const [claims, setClaims]       = useState<any[]>([])
+  const [loading, setLoading]     = useState(false)
+  const [saving, setSaving]       = useState<string | null>(null)
 
+  // Read key from URL hash (#secret) or sessionStorage on mount
   useEffect(() => {
-    fetch('/api/admin/claims')
-      .then(r => r.json())
-      .then(d => { setClaims(d.claims || []); setLoading(false) })
+    const hash = window.location.hash.slice(1)
+    const stored = sessionStorage.getItem('daily_admin_key')
+    const key = hash || stored || null
+    if (key) {
+      if (hash) sessionStorage.setItem('daily_admin_key', hash)
+      setAdminKey(key)
+    }
   }, [])
 
+  // Fetch claims whenever key is set
+  useEffect(() => {
+    if (!adminKey) return
+    setLoading(true)
+    fetch('/api/admin/claims', { headers: { 'x-admin-secret': adminKey } })
+      .then(r => {
+        if (r.status === 401) { setAuthError(true); setAdminKey(null); sessionStorage.removeItem('daily_admin_key'); return { claims: [] } }
+        return r.json()
+      })
+      .then(d => { setClaims(d.claims || []); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [adminKey])
+
   async function updateStatus(claimId: string, status: ClaimStatus) {
+    if (!adminKey) return
     setSaving(claimId)
     setClaims(prev => prev.map(c => c.id === claimId ? { ...c, status } : c))
     await fetch('/api/update-claim', {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminKey },
       body: JSON.stringify({ claimId, status }),
     })
     setSaving(null)
+  }
+
+  function handleLogin() {
+    const key = keyInput.trim()
+    if (!key) return
+    sessionStorage.setItem('daily_admin_key', key)
+    setAuthError(false)
+    setAdminKey(key)
+  }
+
+  // Auth gate
+  if (!adminKey) {
+    return (
+      <div style={{ fontFamily: 'system-ui, sans-serif', background: '#F5F0E8', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ background: 'white', borderRadius: 20, padding: '32px 28px', maxWidth: 360, width: '100%', boxShadow: '0 4px 24px rgba(13,13,13,.08)' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#1D9E75', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Daily · Uso interno</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: '#0D0D0D', marginBottom: 20 }}>Acceso restringido</div>
+          {authError && (
+            <div style={{ background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.2)', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#EF4444', marginBottom: 16 }}>
+              Clave incorrecta. Inténtalo de nuevo.
+            </div>
+          )}
+          <input
+            type="password"
+            placeholder="Clave de acceso"
+            value={keyInput}
+            onChange={e => setKeyInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleLogin()}
+            style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1px solid rgba(13,13,13,.12)', fontSize: 14, marginBottom: 12, boxSizing: 'border-box' }}
+          />
+          <button onClick={handleLogin}
+            style={{ width: '100%', background: '#0D0D0D', color: 'white', border: 'none', borderRadius: 12, padding: '13px 0', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+            Entrar →
+          </button>
+        </div>
+      </div>
+    )
   }
 
   const open   = claims.filter(c => c.status !== 'resolved')
@@ -84,10 +143,7 @@ export default function DailyInternalPage() {
               const overdue = days > 30 && c.status !== 'resolved'
               return (
                 <div key={c.id} style={{
-                  background: 'white',
-                  borderRadius: 16,
-                  padding: '14px 16px',
-                  marginBottom: 10,
+                  background: 'white', borderRadius: 16, padding: '14px 16px', marginBottom: 10,
                   border: overdue ? '1.5px solid rgba(216,90,48,.4)' : '1px solid rgba(13,13,13,.08)',
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
