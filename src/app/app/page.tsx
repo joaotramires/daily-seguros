@@ -305,10 +305,10 @@ export default function HomePage() {
             </svg>
             <div className="flex-1 min-w-0">
               <div className="text-[13px] font-bold text-white leading-tight">
-                Netflix gratis · <span style={{ color: '#E50914' }}>3 meses</span>
+                Netflix gratis · <span style={{ color: '#E50914' }}>1 año</span>
               </div>
               <div className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,.35)' }}>
-                Trae 1 amigo · para los dos
+                Trae 1 amigo · si los dos se quedan 1 año
               </div>
             </div>
             <div className="flex items-center gap-1.5 flex-shrink-0">
