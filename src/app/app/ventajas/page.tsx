@@ -45,12 +45,17 @@ const CONTRIBUTE = [
 
 type Tab = 'ventajas' | 'impacto'
 
+type ReferralStats = { earned: number; pending: number; forfeited: number; nextEligibleAt: string | null }
+
 export default function ClubPage() {
   const [tab, setTab]             = useState<Tab>('ventajas')
   const [toast, setToast]         = useState(false)
+  const [copied, setCopied]       = useState(false)
   const [adopted, setAdopted]     = useState<string | null>(null)
   const [donationAmount, setDonationAmount] = useState(0)
   const [hasPolicy, setHasPolicy] = useState(false)
+  const [referralCode, setReferralCode]   = useState<string | null>(null)
+  const [referralStats, setReferralStats] = useState<ReferralStats>({ earned: 0, pending: 0, forfeited: 0, nextEligibleAt: null })
 
   useEffect(() => {
     const customerId = localStorage.getItem('customerId')
@@ -68,9 +73,22 @@ export default function ClubPage() {
               s + Number(p.monthly_premium) * 0.05, 0)
           )
         }
+        if (data.referralCode) setReferralCode(data.referralCode)
+        if (data.referralStats) setReferralStats(data.referralStats)
       })
       .catch(console.error)
   }, [])
+
+  async function shareReferral() {
+    const url = `https://daily-seguros.vercel.app/?ref=${referralCode}`
+    if (navigator.share) {
+      await navigator.share({ title: 'Daily Seguros', text: '¿Cansado de tu aseguradora? Prueba Daily.', url })
+    } else {
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
 
   function handleUsar() {
     setToast(true)
@@ -121,6 +139,74 @@ const TABS: { id: Tab; label: string }[] = [
                   </span>
                 </div>
               )}
+
+              {/* Referral / Netflix section */}
+              {referralCode && (() => {
+                const NETFLIX_THRESHOLD = 3
+                const netflixProgress = Math.min(referralStats.earned + referralStats.pending, NETFLIX_THRESHOLD)
+                const netflixUnlocked = referralStats.earned >= NETFLIX_THRESHOLD
+                return (
+                  <div className="rounded-[16px] p-4 mb-4 border border-[#0D0D0D]/[0.08]"
+                    style={{ background: 'var(--sand-card)', boxShadow: '0 2px 12px rgba(13,13,13,.06)' }}>
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <div className="text-[10px] font-bold text-[#0D0D0D]/35 uppercase tracking-[0.8px]">Invita amigos</div>
+                        <div className="text-[14px] font-bold text-[#0D0D0D] mt-0.5">
+                          {netflixUnlocked ? '🎉 Netflix 1 año desbloqueado' : `${netflixProgress}/${NETFLIX_THRESHOLD} para Netflix gratis`}
+                        </div>
+                      </div>
+                      <div className="w-10 h-10 rounded-[10px] flex items-center justify-center text-[20px] flex-shrink-0"
+                        style={{ background: netflixUnlocked ? 'rgba(229,9,20,.1)' : 'rgba(13,13,13,.06)' }}>
+                        📺
+                      </div>
+                    </div>
+
+                    {/* Progress bar */}
+                    <div className="flex gap-1.5 mb-3">
+                      {Array.from({ length: NETFLIX_THRESHOLD }).map((_, i) => {
+                        const isEarned  = i < referralStats.earned
+                        const isPending = !isEarned && i < referralStats.earned + referralStats.pending
+                        return (
+                          <div key={i} className="h-[5px] flex-1 rounded-full"
+                            style={{
+                              background: isEarned  ? '#1D9E75' :
+                                          isPending ? 'rgba(29,158,117,.35)' :
+                                                      'rgba(13,13,13,.1)',
+                            }} />
+                        )
+                      })}
+                    </div>
+
+                    {/* Status labels */}
+                    <div className="flex gap-3 flex-wrap mb-3">
+                      {referralStats.earned > 0 && (
+                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-[7px]"
+                          style={{ background: 'rgba(29,158,117,.1)', color: '#1D9E75' }}>
+                          {referralStats.earned} confirmado{referralStats.earned > 1 ? 's' : ''} ✓
+                        </span>
+                      )}
+                      {referralStats.pending > 0 && referralStats.nextEligibleAt && (
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-[7px]"
+                          style={{ background: 'rgba(245,158,11,.1)', color: '#D97706' }}>
+                          {referralStats.pending} en espera · hasta {new Date(referralStats.nextEligibleAt).toLocaleDateString('es-ES', { month: 'short', year: 'numeric' })}
+                        </span>
+                      )}
+                    </div>
+
+                    {!netflixUnlocked && (
+                      <p className="text-[11px] text-[#0D0D0D]/40 leading-relaxed mb-3">
+                        Netflix 1 año gratis cuando tú y tus {NETFLIX_THRESHOLD} amigos llevéis 1 año activos.
+                      </p>
+                    )}
+
+                    <motion.button whileTap={tapScale} onClick={shareReferral}
+                      className="w-full py-2.5 rounded-[11px] text-[13px] font-semibold text-white"
+                      style={{ background: '#0D0D0D' }}>
+                      {copied ? '¡Enlace copiado!' : `Compartir código ${referralCode.toUpperCase()} →`}
+                    </motion.button>
+                  </div>
+                )
+              })()}
 
               <div className="text-[10px] font-bold text-[#0D0D0D]/35 uppercase tracking-[0.8px] mb-3">
                 Club Mapfre · 6 ventajas incluidas

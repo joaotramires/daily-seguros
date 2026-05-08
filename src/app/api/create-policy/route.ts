@@ -52,9 +52,15 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (customer?.referred_by && customer.email) {
+    const rewardEligibleAt = new Date()
+    rewardEligibleAt.setFullYear(rewardEligibleAt.getFullYear() + 1)
     await supabase
       .from('referrals')
-      .update({ converted: true, converted_at: new Date().toISOString() })
+      .update({
+        converted: true,
+        converted_at: new Date().toISOString(),
+        reward_eligible_at: rewardEligibleAt.toISOString(),
+      })
       .eq('referred_email', customer.email)
       .eq('converted', false)
   }
